@@ -66,7 +66,7 @@
       "services": {
         "websites": true,
         "voice_agents": true,
-        "chatbots": false,
+        "chatbots": true,
         "seo": true,
         "aeo": false,
         "ads": false,
@@ -74,7 +74,7 @@
         "crm": true
       },
       "status": "active",
-      "mrr": 1890,
+      "mrr": 2197,
       "since": "Dec 2025",
       "locId": "Z9UtrrCvJc8ObhTIILLF"
     },
