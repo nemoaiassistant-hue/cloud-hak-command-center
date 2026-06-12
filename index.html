@@ -435,7 +435,7 @@ tr:hover{background:var(--border)}
       <input type="text" class="search" placeholder="Search clients..." id="globalSearch" oninput="handleSearch(this.value)">
       <div class="icon-btn" id="themeToggle" title="Toggle theme" onclick="toggleTheme()">🌙</div>
       <div class="icon-btn" title="Notifications">🔔</div>
-      <div class="icon-btn" title="Add Client">➕</div>
+      <div class="icon-btn" title="Add Client" onclick="openOnboardingModal()">➕</div>
     </div>
   </div>
 
@@ -591,6 +591,88 @@ tr:hover{background:var(--border)}
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- ===== ONBOARDING MODAL ===== -->
+<div class="modal-overlay" id="onboardingModal">
+  <div class="modal">
+    <h2>➕ Onboard New Client</h2>
+    <div class="modal-sub">Create a new GHL sub-account and subscribe to services</div>
+
+    <div class="form-group">
+      <label>Business Name</label>
+      <input class="form-input" id="ob-name" placeholder="e.g. Brighton Dental Care">
+    </div>
+
+    <div class="form-group">
+      <label>Business Type</label>
+      <select class="form-input" id="ob-type">
+        <option value="">Select type...</option>
+        <option>Dental Practice</option>
+        <option>Solicitors / Legal</option>
+        <option>Accounting / Finance</option>
+        <option>Healthcare / Medical</option>
+        <option>Property / Estate Agent</option>
+        <option>Insurance (IFA)</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div class="form-group" style="flex:1">
+        <label>Contact Name</label>
+        <input class="form-input" id="ob-contact" placeholder="John Smith">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Contact Email</label>
+        <input class="form-input" id="ob-email" placeholder="john@business.co.uk">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div class="form-group" style="flex:1">
+        <label>Phone</label>
+        <input class="form-input" id="ob-phone" placeholder="+44 1273 000 000">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Location/City</label>
+        <input class="form-input" id="ob-city" placeholder="Brighton">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Subscribe to Services</label>
+      <div class="service-checks" id="ob-services">
+        <div class="service-check" onclick="this.classList.toggle('checked')">🌐 Web Design</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">🎙️ AI Voice Agents</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">💬 AI Chatbots</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">🔍 SEO</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">🤖 AEO</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">📣 Google & Social Ads</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">⚙️ Automation</div>
+        <div class="service-check" onclick="this.classList.toggle('checked')">📋 CRM</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Monthly Retainer (£)</label>
+      <input class="form-input" id="ob-mrr" type="number" placeholder="1500" style="width:120px">
+    </div>
+
+    <div class="form-group">
+      <label>Internal Notes</label>
+      <textarea class="form-input" id="ob-notes" rows="2" placeholder="Any notes about this client..." style="resize:vertical"></textarea>
+    </div>
+
+    <div style="background:var(--light-gray);border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--gray)">
+      ℹ️ This will create a new GHL sub-account, set up custom fields, and provision selected services.
+    </div>
+
+    <div class="modal-actions">
+      <button class="filter-btn" style="padding:10px 20px" onclick="closeOnboardingModal()">Cancel</button>
+      <button class="filter-btn" style="padding:10px 20px;background:var(--teal);color:#fff" onclick="submitOnboarding()">✅ Create Client</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -1900,6 +1982,78 @@ function toggleSidebar() {
 }
 
 // ===== INIT =====
+// ===== ONBOARDING MODAL =====
+function openOnboardingModal() {
+  document.getElementById('onboardingModal').classList.add('show');
+}
+function closeOnboardingModal() {
+  document.getElementById('onboardingModal').classList.remove('show');
+}
+function submitOnboarding() {
+  const name = document.getElementById('ob-name').value.trim();
+  const type = document.getElementById('ob-type').value;
+  if (!name) { alert('Please enter a business name'); return; }
+  if (!type) { alert('Please select a business type'); return; }
+
+  const services = Array.from(document.querySelectorAll('#ob-services .service-check.checked'))
+    .map(el => el.textContent.trim());
+  if (services.length === 0) { alert('Please select at least one service'); return; }
+
+  const mrr = parseInt(document.getElementById('ob-mrr').value) || 0;
+
+  // Build new client object
+  const locId = 'loc_' + name.toLowerCase().replace(/[^a-z]/g,'').slice(0,10);
+  const serviceFields = {websites:false,voice_agents:false,chatbots:false,seo:false,aeo:false,ads:false,automation:false,crm:false};
+  services.forEach(s => {
+    if (s.includes('Web')) serviceFields.websites = true;
+    if (s.includes('Voice')) serviceFields.voice_agents = true;
+    if (s.includes('Chat')) serviceFields.chatbots = true;
+    if (s.includes('SEO') || s.includes('🔍')) serviceFields.seo = true;
+    if (s.includes('AEO')) serviceFields.aeo = true;
+    if (s.includes('Ads')) serviceFields.ads = true;
+    if (s.includes('Automation')) serviceFields.automation = true;
+    if (s.includes('CRM')) serviceFields.crm = true;
+  });
+
+  const newClient = {
+    name: name,
+    type: type,
+    contact: document.getElementById('ob-contact').value.trim() || '—',
+    email: document.getElementById('ob-email').value.trim() || '—',
+    phone: document.getElementById('ob-phone').value.trim() || '—',
+    city: document.getElementById('ob-city').value.trim() || '—',
+    locId: locId,
+    mrr: mrr,
+    status: 'onboarding',
+    since: new Date().toLocaleDateString('en-GB',{month:'short',year:'numeric'}),
+    services: serviceFields,
+    notes: document.getElementById('ob-notes').value.trim()
+  };
+
+  DEMO_CLIENTS.push(newClient);
+  allClients = DEMO_CLIENTS;
+  populateClientSelector();
+  updateBadges();
+  renderOverview();
+  renderClients();
+  closeOnboardingModal();
+
+  // Reset form
+  document.querySelectorAll('#ob-services .service-check').forEach(el => el.classList.remove('checked'));
+  ['ob-name','ob-type','ob-contact','ob-email','ob-phone','ob-city','ob-mrr','ob-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // Switch to the new client
+  selectClient(locId);
+}
+
+// Close modal on overlay click
+document.getElementById('onboardingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeOnboardingModal();
+});
+
 function init() {
   allClients = DEMO_CLIENTS;
   populateClientSelector();
