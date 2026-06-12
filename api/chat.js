@@ -170,34 +170,255 @@ async function executeFunction(name, args, ghToken, config) {
       const agents = await Promise.all(workflows.map(async (wf) => {
         try {
           const runsResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/${wf.id}/runs`, {
-            headers: { Authorization: `Bearer ${token}` },
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit: 50 }),
           });
           const runsData = await runsResp.json();
           const runs = runsData.runs || [];
           const totalSecs = runs.reduce((s, r) => s + ((r.cost_info || {}).call_duration_seconds || 0), 0);
-          // Find which client this belongs to
+          const voiceCalls = runs.filter(r => r.mode !== 'textchat').length;
+          const textChats = runs.filter(r => r.mode === 'textchat').length;
           const client = data.clients.find(c => c.dograhAgentId === wf.id);
           return {
-            id: wf.id,
-            name: wf.name,
-            status: wf.status || 'active',
+            id: wf.id, name: wf.name, status: wf.status || 'active',
             client: client ? client.name : 'Unmapped',
-            sessions: runs.length,
+            sessions: runs.length, voiceCalls, textChats,
             minutes: Math.round(totalSecs / 60 * 10) / 10,
-            lastSession: runs.length > 0 ? runs[runs.length - 1].created_at : 'never',
+            lastSession: runs.length > 0 ? (runs[0].created_at || 'unknown') : 'never',
           };
         } catch (e) {
-          return { id: wf.id, name: wf.name, status: 'error', client: 'Unknown', sessions: 0, minutes: 0, lastSession: 'never' };
+          return { id: wf.id, name: wf.name, status: 'error', client: 'Unknown', sessions: 0, minutes: 0 };
         }
       }));
 
-      return {
-        total_agents: agents.length,
-        active_agents: agents.filter(a => a.status === 'active').length,
-        agents,
-      };
+      return { total_agents: agents.length, active_agents: agents.filter(a => a.status === 'active').length, agents };
     } catch (e) {
       return { error: `Could not reach Dograh: ${e.message}. The server may be offline.` };
+    }
+  }
+
+  if (name === 'create_agent') {
+    const { website_url, business_name, client_name, agent_type } = args;
+    const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
+    const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
+    const zaiKey = process.env.ZAI_API_KEY;
+
+    try {
+      // Step 1: Scrape the website
+      const scrapeResp = await fetch(website_url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!scrapeResp.ok) throw new Error(`Could not fetch website (${scrapeResp.status})`);
+      const html = await scrapeResp.text();
+
+      // Extract text content from HTML
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+        .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+        .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 8000);
+
+      if (text.length < 100) throw new Error('Not enough content extracted from website');
+
+      // Step 2: Generate agent prompts using Z.AI
+      const isVoice = agent_type === 'voice';
+      const genResp = await fetch(ZAI_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${zaiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'glm-4.5',
+          messages: [{
+            role: 'system',
+            content: `You are an expert at creating AI agent prompts for ${isVoice ? 'voice' : 'chat'} assistants. Given website content, generate a complete agent persona. Respond ONLY with valid JSON, no markdown fences.`
+          }, {
+            role: 'user',
+            content: `Create an AI agent for this business based on their website content below.
+
+Business name: ${business_name || '(extract from website)'}
+Agent type: ${isVoice ? 'Voice agent (WebRTC widget on website)' : 'Text chat agent'}
+
+Website content:
+${text}
+
+Generate a JSON object with these exact keys:
+{
+  "business_name": "the actual business name from the website",
+  "greeting": "A natural greeting the agent says when someone starts a conversation. Mention the business name. ${isVoice ? 'Keep it short for voice (10-15 words).' : 'Keep it friendly and brief.'}",
+  "global_prompt": "A detailed system prompt for the agent. Include: who the agent is, its role, ${isVoice ? 'keep responses 2-3 sentences max for voice, use simple spoken language, avoid special characters.' : 'respond in natural chat format.'} Include all services, pricing, FAQs, booking info, business hours, and contact details found on the website. Tell the agent to be helpful, warm, and professional. If specific details aren't on the website, tell the agent to acknowledge and offer to help connect them with the team.",
+  "main_prompt": "The main conversation prompt. Include all knowledge about services, treatments, pricing, FAQs, and common questions organized by category. Include relevant questions the agent should ask. Include a wrap-up section offering to book appointments or connect them with the team.",
+  "summary": "One sentence summary of what this agent does"
+}`
+          }],
+          temperature: 0.4,
+          max_tokens: 2000,
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (!genResp.ok) throw new Error('LLM generation failed');
+      const genData = await genResp.json();
+      let agentConfig;
+      try {
+        agentConfig = JSON.parse(genData.choices[0].message.content);
+      } catch (e) {
+        // Fallback: try to extract JSON from the response
+        const match = genData.choices[0].message.content.match(/\{[\s\S]*\}/);
+        if (match) agentConfig = JSON.parse(match[0]);
+        else throw new Error('Could not parse agent config from LLM');
+      }
+
+      const finalBusinessName = agentConfig.business_name || business_name || 'New Business';
+      const agentName = `${finalBusinessName} AI Assistant`;
+
+      // Step 3: Construct workflow definition
+      const workflowDef = {
+        nodes: [
+          {
+            id: 0,
+            type: 'globalNode',
+            data: {
+              prompt: agentConfig.global_prompt,
+              name: 'Global Node',
+              allow_interrupt: false,
+              invalid: false,
+              is_static: false,
+            },
+          },
+          {
+            id: 1,
+            type: 'startCall',
+            data: {
+              prompt: `Greet the visitor warmly. Tell them your name and that you're the AI assistant for ${finalBusinessName}. Ask how you can help them today. ${isVoice ? 'Keep it short and conversational for voice.' : ''}`,
+              name: 'Start',
+              greeting: agentConfig.greeting,
+              greeting_type: 'text',
+              allow_interrupt: isVoice,
+              add_global_prompt: true,
+              invalid: false,
+              is_start: true,
+              is_static: false,
+              wait_for_user_response: false,
+              detect_voicemail: false,
+              delayed_start: false,
+              selected_through_edge: false,
+              hovered_through_edge: false,
+            },
+          },
+          {
+            id: 2,
+            type: 'agentNode',
+            data: {
+              prompt: agentConfig.main_prompt,
+              name: 'Main Conversation',
+              allow_interrupt: false,
+              add_global_prompt: true,
+              invalid: false,
+              extraction_enabled: false,
+              extraction_prompt: '',
+              extraction_variables: [],
+              selected_through_edge: false,
+              hovered_through_edge: false,
+            },
+          },
+          {
+            id: 4,
+            type: 'endCall',
+            data: {
+              prompt: 'The conversation is complete. Say a brief polite goodbye (6-8 words) and end naturally.',
+              name: 'End Call',
+              allow_interrupt: false,
+              add_global_prompt: false,
+              invalid: false,
+              is_end: true,
+              is_static: false,
+              extraction_enabled: false,
+              extraction_prompt: '',
+              extraction_variables: [],
+              selected_through_edge: false,
+              hovered_through_edge: false,
+            },
+          },
+        ],
+        edges: [
+          { id: 'e1-2', source: 1, target: 2, sourceHandle: null, targetHandle: null, data: { label: 'Continue to main' } },
+          { id: 'e1-4', source: 1, target: 4, sourceHandle: null, targetHandle: null, data: { label: 'End immediately' } },
+          { id: 'e2-4', source: 2, target: 4, sourceHandle: null, targetHandle: null, data: { label: 'End conversation' } },
+        ],
+        viewport: { zoom: 0.8, x: 100, y: 50 },
+      };
+
+      // Step 4: Login to Dograh and create the workflow
+      const loginResp = await fetch(`${DOGRAH_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'nima@cloud-hak.com', password: DOGRAH_PASS }),
+      });
+      if (!loginResp.ok) throw new Error('Dograh login failed');
+      const { token: dograhToken } = await loginResp.json();
+
+      const createResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/create/definition`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${dograhToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: agentName,
+          workflow_definition: workflowDef,
+        }),
+      });
+
+      if (!createResp.ok) {
+        const errText = await createResp.text();
+        throw new Error(`Dograh create failed: ${createResp.status} ${errText.substring(0, 200)}`);
+      }
+
+      const created = await createResp.json();
+      const wfId = created.id;
+
+      // Step 5: Publish the workflow (so it's active, not just a draft)
+      try {
+        await fetch(`${DOGRAH_URL}/api/v1/workflow/${wfId}/publish`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${dograhToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+      } catch (e) {
+        // Publishing may need a separate step - that's OK
+      }
+
+      // Step 6: Map to client in clients.json
+      if (client_name) {
+        const client = data.clients.find(c =>
+          c.name.toLowerCase().includes(client_name.toLowerCase()) ||
+          client_name.toLowerCase().includes(c.name.toLowerCase().split(' ')[0])
+        );
+        if (client) {
+          client.dograhAgentId = wfId;
+          if (!client.services['voice-agents']) client.services['voice-agents'] = true;
+          client.mrr = recalcMrr(client, services);
+          await saveToGitHub(ghToken, data, sha);
+        }
+      }
+
+      const clientNote = client_name ? `Mapped to ${client_name}. ` : '';
+      return {
+        success: true,
+        agent_id: wfId,
+        agent_name: agentName,
+        business: finalBusinessName,
+        summary: agentConfig.summary,
+        message: `Agent "${agentName}" created on Dograh. ID #${wfId}. ${agentConfig.summary} ${clientNote}You can test it in the Dograh builder or embed the widget on the website. The agent knows about services, pricing, FAQs, and booking info from ${finalBusinessName}'s website.`
+      };
+    } catch (e) {
+      return { error: `Failed to create agent: ${e.message}` };
     }
   }
 
@@ -269,6 +490,23 @@ const TOOLS = [
       parameters: { type: 'object', properties: {} },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'create_agent',
+      description: 'Create a new AI agent (voice or chat) on Dograh by scraping a business website. Automatically generates the agent persona, knowledge base, and conversation flow from the website content. Returns the agent ID and details.',
+      parameters: {
+        type: 'object',
+        properties: {
+          website_url: { type: 'string', description: 'The business website URL to scrape (e.g. "https://airwayclinic.se")' },
+          business_name: { type: 'string', description: 'Business name (optional, will be extracted from website if not provided)' },
+          client_name: { type: 'string', description: 'Client name in Command Center to map the agent to (e.g. "Airway Clinic")' },
+          agent_type: { type: 'string', enum: ['voice', 'chat'], description: 'Voice agent (WebRTC widget) or text chat agent', default: 'chat' },
+        },
+        required: ['website_url'],
+      },
+    },
+  },
 ];
 
 const SYSTEM_PROMPT = `You are the Cloud Hak Command Center AI assistant. You help manage clients, services, and pricing for Cloud Hak (a private AI agency).
@@ -279,6 +517,7 @@ You can:
 - Look up client details and MRR
 - Give agency-wide overviews
 - Check the status of AI voice agents (Dograh platform)
+- Create new AI agents from a business website URL (automatically scrapes the site, generates the agent persona, creates it on Dograh, and maps it to a client)
 
 Be concise and direct. When you execute an action, confirm what changed in one sentence. Use £ for all prices. You are speaking to Nima, the owner of Cloud Hak.`;
 
