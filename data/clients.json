@@ -97,13 +97,9 @@
         "automation": false,
         "crm": true
       },
-      "customPricing": {
-        "websites": {
-          "discount": 20
-        }
-      },
+      "customPricing": {},
       "status": "active",
-      "mrr": 998,
+      "mrr": 1097,
       "since": "Oct 2025",
       "locId": "pvH5KtdWPkbvSWR49akA"
     },
