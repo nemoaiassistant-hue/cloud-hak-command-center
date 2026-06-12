@@ -200,13 +200,15 @@ async function executeFunction(name, args, ghToken, config) {
 
   if (name === 'create_agent') {
     const { website_url, business_name, client_name, agent_type } = args;
+    // Ensure URL has protocol
+    const url = website_url.match(/^https?:\/\//) ? website_url : `https://${website_url}`;
     const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
     const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
     const zaiKey = process.env.ZAI_API_KEY;
 
     try {
       // Step 1: Scrape the website
-      const scrapeResp = await fetch(website_url, {
+      const scrapeResp = await fetch(url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
         signal: AbortSignal.timeout(10000),
       });
