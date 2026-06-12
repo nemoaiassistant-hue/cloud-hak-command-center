@@ -1235,9 +1235,8 @@ function renderClientServicePage(viewId) {
   document.getElementById('view-' + viewId).innerHTML = html;
 
   // Async data load for CRM
-  if (viewId === 'crm' && c && !crmDataCache) {
+  if (viewId === 'crm' && c && !crmDataCache[c.locId] && !crmLoading[c.locId]) {
     loadCRMData(c.locId).then(() => {
-      // Re-render after data loads
       renderClientServicePage(viewId);
     });
   }
@@ -1259,20 +1258,22 @@ function panel(title, content, action) {
 }
 
 // ===== CRM LIVE DATA LOADER =====
-let crmDataCache = null;
-let crmLoading = false;
+let crmDataCache = {};
+let crmLoading = {};
 
 async function loadCRMData(locId) {
-  if (crmDataCache && crmDataCache[locId]) return crmDataCache[locId];
-  if (crmLoading) return null;
-  crmLoading = true;
+  if (crmDataCache[locId]) return crmDataCache[locId];
+  if (crmLoading[locId]) return null;
+  crmLoading[locId] = true;
   try {
-    const resp = await fetch('data/crm-data.json');
-    crmDataCache = await resp.json();
-    crmLoading = false;
-    return crmDataCache[locId] || null;
+    const resp = await fetch('/api/crm?locId=' + locId);
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    const data = await resp.json();
+    crmDataCache[locId] = data;
+    crmLoading[locId] = false;
+    return data;
   } catch(e) {
-    crmLoading = false;
+    crmLoading[locId] = false;
     console.log('CRM data fetch error:', e);
     return null;
   }
@@ -1983,33 +1984,21 @@ const SERVICE_WORKSPACE = {
 // ─────── 📋 CRM (LIVE DATA) ───────
 'crm': {
   dashboard_count: (c) => {
-    const data = crmDataCache && crmDataCache[c.locId];
+    const data = crmDataCache[c.locId];
     return data ? data.contactCount + ' contacts' : '';
   },
   dashboard(c) {
-    const data = crmDataCache && crmDataCache[c.locId];
+    const data = crmDataCache[c.locId];
     if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
-    
-    // Count new this month
-    const now = new Date();
-    const newThisMonth = data.contacts.filter(ct => {
-      const d = new Date(ct.dateAdded);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
 
-    // Group by source
-    const sources = {};
-    data.contacts.forEach(ct => {
-      const src = ct.source || 'Direct';
-      sources[src] = (sources[src] || 0) + 1;
-    });
-    const topSources = Object.entries(sources).sort((a,b) => b[1]-a[1]).slice(0,4);
+    // Group by source (use pre-computed from API if available)
+    const topSources = data.topSources || [];
 
     return `
       <div class="stat-grid">
         ${statCard('Total Contacts', data.contactCount)}
         ${statCard('Pipeline Value', data.pipelineValue > 0 ? '£' + data.pipelineValue.toLocaleString() : '—', 'var(--teal)')}
-        ${statCard('New This Month', newThisMonth)}
+        ${statCard('New This Month', data.newThisMonth)}
         ${statCard('Opportunities', data.opportunityCount)}
       </div>
       ${panel('📋 Recent Contacts', `
@@ -2028,16 +2017,13 @@ const SERVICE_WORKSPACE = {
       `)}
       ${topSources.length > 0 ? panel('📊 Lead Sources', `
         <div style="display:grid;gap:8px;font-size:13px">
-          ${topSources.map(([src, count]) => {
-            const pct = Math.round(count / data.contactCount * 100);
-            return `<div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>${src}</span><span style="color:var(--gray)">${count} (${pct}%)</span></div>`;
-          }).join('')}
+          ${topSources.map(s => `<div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>${s.name}</span><span style="color:var(--gray)">${s.count} (${s.pct}%)</span></div>`).join('')}
         </div>
       `) : ''}
     `;
   },
   manage(c) {
-    const data = crmDataCache && crmDataCache[c.locId];
+    const data = crmDataCache[c.locId];
     if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
     
     return `
@@ -2059,7 +2045,7 @@ const SERVICE_WORKSPACE = {
     `;
   },
   activity(c) {
-    const data = crmDataCache && crmDataCache[c.locId];
+    const data = crmDataCache[c.locId];
     if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
     
     return panel('📈 Recent Contacts (by date added)', `
@@ -2074,7 +2060,7 @@ const SERVICE_WORKSPACE = {
     `);
   },
   config(c) {
-    const data = crmDataCache && crmDataCache[c.locId];
+    const data = crmDataCache[c.locId];
     const count = data ? data.contactCount : 0;
     const lastUpdate = data ? data.contacts[0]?.dateAdded?.split('T')[0] : '—';
     
