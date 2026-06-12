@@ -216,6 +216,94 @@ tr:hover{background:var(--border)}
 /* Nav hidden state */
 .nav-item.service-disabled{display:none}
 
+/* ===== WORKSPACE TABS ===== */
+.ws-tabs{
+  display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;
+}
+.ws-tab{
+  padding:10px 20px;font-size:13px;font-weight:600;color:var(--gray);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:all 0.15s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none;
+}
+.ws-tab:hover{color:var(--text)}
+.ws-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.ws-tab .ws-tab-count{
+  display:inline-block;background:var(--border);padding:1px 7px;border-radius:10px;
+  font-size:11px;margin-left:6px;font-weight:700;
+}
+.ws-tab.active .ws-tab-count{background:rgba(59,182,179,0.15);color:var(--teal)}
+.ws-content{display:none}
+.ws-content.active{display:block;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Call log entries */
+.call-entry,.conv-entry{
+  display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;
+  background:var(--light-gray);margin-bottom:8px;cursor:pointer;transition:all 0.15s;
+}
+.call-entry:hover,.conv-entry:hover{background:var(--border)}
+.call-duration{font-size:12px;color:var(--gray);white-space:nowrap}
+.call-type{font-size:16px}
+.call-status-inbound{color:var(--green)}
+.call-status-missed{color:var(--red,#ef4444)}
+.call-status-outbound{color:var(--teal)}
+
+/* Pipeline board */
+.pipeline-board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pipeline-col{background:var(--light-gray);border-radius:10px;padding:12px;min-height:200px}
+.pipeline-col-header{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;display:flex;justify-content:space-between}
+.pipeline-card{
+  background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:10px;
+  margin-bottom:8px;font-size:12px;cursor:pointer;transition:all 0.15s;
+}
+.pipeline-card:hover{border-color:var(--teal)}
+.pipeline-card .pc-name{font-weight:600;margin-bottom:4px}
+.pipeline-card .pc-value{color:var(--teal);font-weight:600}
+
+/* Keyword rank table */
+.rank-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.rank-pos{font-size:16px;font-weight:700;min-width:36px;text-align:center}
+.rank-pos-1,.rank-pos-2,.rank-pos-3{color:var(--green)}
+.rank-up{color:var(--green)}
+.rank-down{color:#ef4444}
+.rank-same{color:var(--gray)}
+
+/* Toggle switch */
+.toggle{position:relative;width:42px;height:24px;background:var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s}
+.toggle.on{background:var(--teal)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform 0.2s}
+.toggle.on::after{transform:translateX(18px)}
+
+/* Code block for embed */
+.code-block{
+  background:var(--darker);border:1px solid var(--border);border-radius:8px;
+  padding:12px;font-family:'Fira Code',monospace;font-size:12px;
+  color:var(--teal);overflow-x:auto;position:relative;
+}
+.code-block .copy-btn{position:absolute;top:8px;right:8px;font-size:11px;padding:4px 10px;background:var(--teal);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit}
+
+/* Onboarding modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--dark);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto}
+.modal h2{margin-bottom:4px}
+.modal .modal-sub{font-size:13px;color:var(--gray);margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.form-input{
+  width:100%;padding:10px 14px;background:var(--light-gray);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;
+}
+.form-input:focus{border-color:var(--teal)}
+.service-checks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.service-check{
+  display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;
+  background:var(--light-gray);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;font-size:13px;
+}
+.service-check:hover{border-color:var(--teal)}
+.service-check.checked{border-color:var(--teal);background:rgba(59,182,179,0.06)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+
 /* ===== MOBILE ===== */
 .mobile-header{display:none;padding:12px 16px;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--dark)}
 .menu-toggle{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px}
@@ -886,68 +974,830 @@ function renderClientOverview() {
   `;
 }
 
-// ===== RENDER CLIENT SERVICE PAGE (when a specific client is selected) =====
+// ===== WORKSPACE SYSTEM =====
+let wsActiveTab = {}; // track active tab per service view
+
 function renderClientServicePage(viewId) {
   const config = SERVICE_CONFIG[viewId];
   const c = selectedClient;
-  const otherServices = Object.entries(c.services).filter(([k,v]) => v && k !== config.field)
-    .map(([k]) => {
-      const sc = Object.values(SERVICE_CONFIG).find(s => s.field === k);
-      return sc ? `<span style="font-size:16px" title="${sc.name}">${sc.icon}</span>` : '';
-    }).join(' ');
+  if (!wsActiveTab[viewId]) wsActiveTab[viewId] = 'dashboard';
 
-  const html = `
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Service Status</div>
-        <div class="stat-value" style="font-size:18px;color:var(--green)">Active</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Monthly Cost</div>
-        <div class="stat-value" style="color:var(--teal)">£${config.price}/mo</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Client Since</div>
-        <div class="stat-value" style="font-size:18px">${c.since}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Other Services</div>
-        <div class="stat-value" style="font-size:18px">${otherServices || '<span style="color:var(--gray);font-size:13px">None</span>'}</div>
-      </div>
-    </div>
+  const ws = SERVICE_WORKSPACE[viewId];
+  if (!ws) {
+    document.getElementById('view-' + viewId).innerHTML = `<div class="panel"><h3>Workspace coming soon</h3></div>`;
+    return;
+  }
 
-    <div class="panel">
-      <h3>${config.icon} ${config.name} — ${c.name}</h3>
-      <div style="display:grid;gap:12px;font-size:13px">
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="color:var(--gray)">Service Type</span><span style="font-weight:600">${config.name}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="color:var(--gray)">Status</span><span class="status-pill status-${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="color:var(--gray)">Monthly Fee</span><span class="revenue">£${config.price}/mo</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="color:var(--gray)">GHL Location</span><span style="font-family:monospace;font-size:11px">${c.locId}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0">
-          <span style="color:var(--gray)">Contract Started</span><span>${c.since}</span>
-        </div>
-      </div>
-    </div>
+  const tabs = ['dashboard','manage','activity','config'];
+  let html = `<div class="ws-tabs">`;
+  tabs.forEach(t => {
+    const label = t.charAt(0).toUpperCase()+t.slice(1);
+    const count = ws[t+'_count'] ? ws[t+'_count'](c) : '';
+    html += `<button class="ws-tab ${wsActiveTab[viewId]===t?'active':''}" onclick="switchWsTab('${viewId}','${t}')">${label}${count?`<span class="ws-tab-count">${count}</span>`:''}</button>`;
+  });
+  html += `</div>`;
 
-    <div class="panel">
-      <h3>⚙️ Quick Actions</h3>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Opens service config')">🔧 Configure</button>
-        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Opens GHL location')">🔗 Open in GHL</button>
-        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Downloads report')">📄 Export Report</button>
-      </div>
-    </div>
-  `;
+  const tabContent = ws[wsActiveTab[viewId]] ? ws[wsActiveTab[viewId]](c) : `<div class="panel">No data</div>`;
+  html += `<div class="ws-content active">${tabContent}</div>`;
+
   document.getElementById('view-' + viewId).innerHTML = html;
 }
+
+function switchWsTab(viewId, tab) {
+  wsActiveTab[viewId] = tab;
+  renderClientServicePage(viewId);
+}
+
+// Helper: stat card
+function statCard(label, value, color) {
+  return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value" ${color?`style="color:${color}"`:''}>${value}</div></div>`;
+}
+
+// Helper: panel
+function panel(title, content, action) {
+  return `<div class="panel" style="margin-bottom:20px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><h3 style="margin:0">${title}</h3>${action||''}</div>${content}</div>`;
+}
+
+// ===== WORKSPACE DEFINITIONS FOR EACH SERVICE =====
+const SERVICE_WORKSPACE = {
+
+// ─────── 🎙️ VOICE AGENTS ───────
+'voice-agents': {
+  dashboard_count: (c) => '24 calls',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Calls Today', '8')}
+        ${statCard('This Week', '24', 'var(--teal)')}
+        ${statCard('Avg Duration', '3:42')}
+        ${statCard('Booking Rate', '68%', 'var(--green)')}
+      </div>
+      ${panel('📋 Agent Status', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Agent Name</span><span style="font-weight:600">Sam (AI Receptionist)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Phone Number</span><span style="font-family:monospace">+44 1273 000 123</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Status</span><span class="status-pill status-active">● Online</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Hours</span><span>Mon–Fri 9:00–17:00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0">
+            <span style="color:var(--gray)">After Hours</span><span>Voicemail + SMS callback</span>
+          </div>
+        </div>
+      `)}
+      ${panel('📊 Call Distribution', `
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
+            <div style="font-size:28px;font-weight:800;color:var(--green)">17</div><div style="font-size:11px;color:var(--gray)">Answered</div>
+          </div>
+          <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
+            <div style="font-size:28px;font-weight:800;color:#ef4444">5</div><div style="font-size:11px;color:var(--gray)">Missed</div>
+          </div>
+          <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
+            <div style="font-size:28px;font-weight:800;color:var(--teal)">2</div><div style="font-size:11px;color:var(--gray)">Transferred</div>
+          </div>
+          <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
+            <div style="font-size:28px;font-weight:800;color:var(--gold)">11</div><div style="font-size:11px;color:var(--gray)">Booked</div>
+          </div>
+        </div>
+      `)}
+    `;
+  },
+  activity_count: (c) => '24',
+  activity(c) {
+    const calls = [
+      {type:'📥',name:'Sarah Jenkins',status:'inbound',dur:'4:12',time:'2:34 PM',note:'Booked consultation — Thu 3pm'},
+      {type:'📥',name:'Unknown',status:'missed',dur:'0:00',time:'1:50 PM',note:'Missed call — SMS sent'},
+      {type:'📤',name:'Mike Chen',status:'outbound',dur:'2:45',time:'12:30 PM',note:'Follow-up callback'},
+      {type:'📥',name:'Emma Wilson',status:'inbound',dur:'5:30',time:'11:15 AM',note:'Asked about pricing, sent info'},
+      {type:'📥',name:'David Brown',status:'inbound',dur:'3:20',time:'10:05 AM',note:'Booked consultation — Fri 10am'},
+      {type:'📥',name:'Lisa Park',status:'inbound',dur:'4:55',time:'9:30 AM',note:'Transferred to reception'},
+    ];
+    return panel('📞 Recent Calls', calls.map(call => `
+      <div class="call-entry">
+        <span class="call-type">${call.type}</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${call.name} <span class="call-status-${call.status}">${call.status}</span></div>
+          <div style="font-size:12px;color:var(--gray)">${call.note}</div>
+        </div>
+        <span class="call-duration">${call.dur}</span>
+        <span style="font-size:11px;color:var(--gray)">${call.time}</span>
+      </div>
+    `).join(''), `<button class="filter-btn" style="padding:6px 14px" onclick="alert('Exports call log CSV')">📄 Export</button>`);
+  },
+  manage(c) {
+    return `
+      ${panel('🎙️ Agent Configuration', `
+        <div style="display:grid;gap:14px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Agent Name</span>
+            <input class="form-input" style="width:200px" value="Sam (AI Receptionist)">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Voice Model</span>
+            <select class="form-input" style="width:200px"><option>Professional Female (UK)</option><option>Friendly Male (UK)</option><option>Professional Male (US)</option></select>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Speaking Speed</span>
+            <input type="range" min="80" max="120" value="100" style="width:200px">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Personality</span>
+            <select class="form-input" style="width:200px"><option>Warm & Helpful</option><option>Professional & Concise</option><option>Casual & Friendly</option></select>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Interruption Handling</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+            <span style="color:var(--gray)">Background Noise Filter</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      `)}
+      ${panel('🕘 Business Hours & Routing', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Monday–Friday</span><span>9:00 AM – 5:00 PM</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Saturday</span><span>10:00 AM – 2:00 PM</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Sunday</span><span style="color:#ef4444">Closed</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);padding-top:10px"><span style="color:var(--gray)">After Hours Action</span><span>Voicemail + SMS callback</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Overflow (3+ queue)</span><span>Transfer to mobile</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Emergency Keywords</span><span>Transfer immediately</span></div>
+        </div>
+      `)}
+      ${panel('🧪 Test Call', `
+        <div style="display:flex;gap:12px;align-items:center">
+          <button class="filter-btn" style="padding:10px 20px;background:var(--teal);color:#fff" onclick="alert('Initiating test call...')">📞 Place Test Call</button>
+          <span style="font-size:12px;color:var(--gray)">Calls your number to test the agent</span>
+        </div>
+      `)}
+    `;
+  },
+  config(c) {
+    return `
+      ${panel('🔗 Integrations', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>📅 Google Calendar</span><span class="status-pill status-active">Connected</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>📋 GHL CRM</span><span class="status-pill status-active">Connected</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>💬 SMS Gateway</span><span class="status-pill status-active">Twilio</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+            <span>🏥 Practice Management</span><span class="status-pill" style="background:var(--border)">Not Connected</span>
+          </div>
+        </div>
+      `)}
+      ${panel('📚 Knowledge Base', `
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
+            <span>📄 Services & Pricing.pdf</span><span style="font-size:11px;color:var(--gray)">Updated 2 days ago</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
+            <span>📄 FAQ.md</span><span style="font-size:11px;color:var(--gray)">Updated 1 week ago</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
+            <span>📄 Business Info.txt</span><span style="font-size:11px;color:var(--gray)">Updated 2 weeks ago</span>
+          </div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content;margin-top:4px">➕ Upload Document</button>
+        </div>
+      `)}
+      ${panel('⚙️ Advanced Settings', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Max Call Duration</span><span>10 minutes</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Recording</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Transcription</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Sentiment Analysis</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      `)}
+    `;
+  }
+},
+
+// ─────── 💬 CHATBOTS ───────
+'chatbots': {
+  dashboard_count: (c) => '142',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Conversations Today', '38')}
+        ${statCard('This Week', '142', 'var(--teal)')}
+        ${statCard('Resolution Rate', '84%', 'var(--green)')}
+        ${statCard('Escalated', '12%', 'var(--gold)')}
+      </div>
+      ${panel('🤖 Bot Status', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Bot Name</span><span style="font-weight:600">Hak Assistant</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Channels</span><span>🌐 Website · 💬 WhatsApp</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Status</span><span class="status-pill status-active">● Active</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Avg Response Time</span><span>0.8 seconds</span></div>
+        </div>
+      `)}
+      ${panel('📈 Conversation Trends', `
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--green)">119</div><div style="font-size:11px;color:var(--gray)">Resolved</div></div>
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--gold)">17</div><div style="font-size:11px;color:var(--gray)">Escalated</div></div>
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--teal)">6</div><div style="font-size:11px;color:var(--gray)">Lead Captured</div></div>
+        </div>
+      `)}
+    `;
+  },
+  activity_count: (c) => '142',
+  activity(c) {
+    const convs = [
+      {name:'Visitor #4291',msgs:8,time:'2:45 PM',status:'✅ Resolved',preview:'Hi, do you offer emergency appointments?'},
+      {name:'Visitor #4290',msgs:12,time:'2:20 PM',status:'🔔 Escalated',preview:'I need to speak to someone about my bill...'},
+      {name:'Visitor #4289',msgs:5,time:'1:55 PM',status:'✅ Resolved',preview:'What are your opening hours?'},
+      {name:'Visitor #4288',msgs:15,time:'1:30 PM',status:'📧 Lead',preview:'I\'d like to book a consultation for...'},
+      {name:'Visitor #4287',msgs:3,time:'12:45 PM',status:'✅ Resolved',preview:'Do you accept Bupa insurance?'},
+    ];
+    return panel('💬 Recent Conversations', convs.map(cv => `
+      <div class="conv-entry">
+        <span style="font-size:16px">${cv.status.includes('Resolved')?'✅':cv.status.includes('Escalated')?'🔔':'📧'}</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${cv.name}</div>
+          <div style="font-size:12px;color:var(--gray)">${cv.preview}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--gray)">${cv.time}</div>
+          <div style="font-size:11px">${cv.msgs} msgs</div>
+        </div>
+      </div>
+    `).join(''));
+  },
+  manage(c) {
+    return `
+      ${panel('🤖 Bot Configuration', `
+        <div style="display:grid;gap:14px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Bot Name</span><input class="form-input" style="width:200px" value="Hak Assistant"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Greeting Message</span><input class="form-input" style="width:300px" value="Hi! How can I help you today? 😊"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Language</span><select class="form-input" style="width:200px"><option>English (UK)</option><option>English (US)</option><option>Multi-language</option></select></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Auto-escalate after</span><span>3 unanswered questions</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="color:var(--gray)">Collect email before chat</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      `)}
+      ${panel('⚡ Escalation Rules', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔔</span>Contains "billing" or "refund" → <strong>Escalate to human</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔔</span>Contains "complaint" → <strong>Escalate + notify manager</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--light-gray);border-radius:8px"><span>📧</span>"book" or "appointment" → <strong>Capture as lead</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--light-gray);border-radius:8px"><span>📧</span>"price" or "cost" → <strong>Send pricing + capture lead</strong></div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content">➕ Add Rule</button>
+        </div>
+      `)}
+    `;
+  },
+  config(c) {
+    return `
+      ${panel('📱 Widget Embed', `
+        <div style="font-size:13px;color:var(--gray);margin-bottom:10px">Add this snippet before the closing &lt;/body&gt; tag on your website:</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent);this.textContent='✓ Copied'">Copy</button>
+          <div>&lt;script src="https://widget.cloud-hak.com/chat.js"
+&nbsp;&nbsp;data-client="${c.locId}"
+&nbsp;&nbsp;data-position="bottom-right"
+&nbsp;&nbsp;data-theme="dark"
+&gt;&lt;/script&gt;</div>
+        </div>
+      `)}
+      ${panel('🎨 Widget Appearance', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Position</span><select class="form-input" style="width:160px"><option>Bottom Right</option><option>Bottom Left</option></select></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Theme</span><select class="form-input" style="width:160px"><option>Dark</option><option>Light</option><option>Auto (match site)</option></select></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Primary Color</span><input type="color" value="#3bb6b3" style="width:60px;height:32px;border:none;border-radius:6px;background:none;cursor:pointer"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Avatar Icon</span><span>🤖 Cloud Hak logo</span></div>
+        </div>
+      `)}
+      ${panel('📚 Knowledge Base', `
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📄 Services & Pricing.pdf</span><span style="font-size:11px;color:var(--gray)">12 docs indexed</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📄 FAQ.md</span><span style="font-size:11px;color:var(--gray)">23 Q&As</span></div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content">➕ Upload Document</button>
+        </div>
+      `)}
+    `;
+  }
+},
+
+// ─────── 🌐 WEB DESIGN ───────
+'websites': {
+  dashboard_count: (c) => '● Live',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Site Status', '● Live', 'var(--green)')}
+        ${statCard('Uptime', '99.9%')}
+        ${statCard('SSL Expires', 'Aug 2026')}
+        ${statCard('Last Deploy', '2 days ago')}
+      </div>
+      ${panel('🌐 Website Overview', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Domain</span><span style="font-family:monospace">${c.name.toLowerCase().replace(/[^a-z]/g,'')}.co.uk</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">CMS</span><span>Cloud Hak Static CMS</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Hosting</span><span>GitHub Pages + Cloudflare CDN</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Pages</span><span>8 published · 1 draft</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">SSL Provider</span><span>Let's Encrypt (auto-renew)</span></div>
+        </div>
+      `)}
+      ${panel('📊 Traffic (Last 30 Days)', `
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--teal)">3,842</div><div style="font-size:11px;color:var(--gray)">Visitors</div></div>
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--green)">2.4</div><div style="font-size:11px;color:var(--gray)">Pages/Visit</div></div>
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--gold)">38%</div><div style="font-size:11px;color:var(--gray)">Bounce Rate</div></div>
+          <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--light-gray);border-radius:10px"><div style="font-size:24px;font-weight:800;color:var(--teal)">1:42</div><div style="font-size:11px;color:var(--gray)">Avg Duration</div></div>
+        </div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return `
+      ${panel('📄 Pages', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>🏠 Homepage</span><div><span style="font-size:11px;color:var(--green)">Published</span> · <span style="font-size:11px;color:var(--gray)">/</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📋 About Us</span><div><span style="font-size:11px;color:var(--green)">Published</span> · <span style="font-size:11px;color:var(--gray)">/about</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>💼 Services</span><div><span style="font-size:11px;color:var(--green)">Published</span> · <span style="font-size:11px;color:var(--gray)">/services</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📞 Contact</span><div><span style="font-size:11px;color:var(--green)">Published</span> · <span style="font-size:11px;color:var(--gray)">/contact</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📝 Blog — Latest News</span><div><span style="font-size:11px;color:var(--gold)">Draft</span> · <span style="font-size:11px;color:var(--gray)">/blog/news</span></div></div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content;margin-top:4px">➕ New Page</button>
+        </div>
+      `)}
+      ${panel('🚀 Deploy', `
+        <div style="display:flex;gap:12px;align-items:center">
+          <button class="filter-btn" style="padding:10px 20px;background:var(--teal);color:#fff" onclick="alert('Deploying to production...')">⬆️ Deploy to Production</button>
+          <button class="filter-btn" style="padding:10px 20px" onclick="alert('Opening staging preview...')">👀 Preview Staging</button>
+          <span style="font-size:12px;color:var(--gray)">Last deploy: 2 days ago by Nima</span>
+        </div>
+      `)}
+    `;
+  },
+  activity(c) {
+    return panel('📝 Deployment History', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🚀 Deployed v2.4</span><span style="font-size:11px;color:var(--gray)">2 days ago · Nima</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🚀 Deployed v2.3</span><span style="font-size:11px;color:var(--gray)">1 week ago · Auto (CMS update)</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🚀 Deployed v2.2</span><span style="font-size:11px;color:var(--gray)">2 weeks ago · Nima</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔧 SSL renewed</span><span style="font-size:11px;color:var(--gray)">1 month ago · Auto</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return `
+      ${panel('🌐 Domain Settings', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Primary Domain</span><span style="font-family:monospace">${c.name.toLowerCase().replace(/[^a-z]/g,'')}.co.uk</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">DNS Provider</span><span>Cloudflare</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">SSL</span><span class="status-pill status-active">Active (auto-renew)</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Redirect www → non-www</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      `)}
+      ${panel('🎨 Theme & Branding', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Theme</span><span>Cloud Hak Pro</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Primary Color</span><input type="color" value="#3bb6b3" style="width:50px;height:30px;border:none;border-radius:6px;background:none;cursor:pointer"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Logo</span><span>✅ Uploaded</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Favicon</span><span>✅ Set</span></div>
+        </div>
+      `)}
+    `;
+  }
+},
+
+// ─────── 🔍 SEO ───────
+'seo': {
+  dashboard_count: (c) => '14 KWs',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Avg Position', '7.2')}
+        ${statCard('Keywords Tracked', '14')}
+        ${statCard('Top 3 Rankings', '4', 'var(--green)')}
+        ${statCard('Top 10 Rankings', '9', 'var(--teal)')}
+      </div>
+      ${panel('🔍 Keyword Rankings', `
+        <div style="display:grid;gap:0">
+          <div class="rank-row"><span class="rank-pos rank-pos-1">1</span><span style="flex:1;font-size:13px">solicitors brighton</span><span class="rank-same">— 0</span></div>
+          <div class="rank-row"><span class="rank-pos rank-pos-2">2</span><span style="flex:1;font-size:13px">family lawyer brighton</span><span class="rank-up">▲ 1</span></div>
+          <div class="rank-row"><span class="rank-pos rank-pos-3">3</span><span style="flex:1;font-size:13px">conveyancing brighton</span><span class="rank-up">▲ 2</span></div>
+          <div class="rank-row"><span class="rank-pos">5</span><span style="flex:1;font-size:13px">will writing solicitors</span><span class="rank-up">▲ 3</span></div>
+          <div class="rank-row"><span class="rank-pos">7</span><span style="flex:1;font-size:13px">divorce lawyer near me</span><span class="rank-down">▼ 1</span></div>
+          <div class="rank-row"><span class="rank-pos">9</span><span style="flex:1;font-size:13px">property solicitor hove</span><span class="rank-up">▲ 4</span></div>
+          <div class="rank-row"><span class="rank-pos">12</span><span style="flex:1;font-size:13px">commercial law brighton</span><span class="rank-same">— 0</span></div>
+          <div class="rank-row"><span class="rank-pos">18</span><span style="flex:1;font-size:13px">employment solicitor sussex</span><span class="rank-down">▼ 2</span></div>
+        </div>
+      `)}
+      ${panel('🗺️ Local Rank Heat Map', `
+        <div style="text-align:center;padding:20px;background:var(--light-gray);border-radius:10px">
+          <div style="font-size:36px;margin-bottom:8px">🗺️</div>
+          <div style="font-size:13px;color:var(--gray);margin-bottom:12px">Visual ranking across Brighton area grid</div>
+          <button class="filter-btn" style="padding:8px 20px" onclick="alert('Opens heat map tool')">Open Heat Map →</button>
+        </div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return `
+      ${panel('✅ SEO Audit Checklist', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:var(--green)">✅</span>Meta titles & descriptions (8/8 pages)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:var(--green)">✅</span>Schema markup (LocalBusiness, FAQ)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:var(--green)">✅</span>Google Business Profile optimized</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:var(--green)">✅</span>Mobile-friendly & fast (LCP 1.8s)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:var(--gold)">⚠️</span>Internal linking needs improvement</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span style="color:#ef4444">❌</span>Backlink profile: 12 referring domains (target: 25+)</div>
+        </div>
+      `)}
+      ${panel('📅 Content Calendar', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📝 "Guide to Conveyancing in Brighton"</span><span class="status-pill status-onboarding">In Progress</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📝 "Divorce Process UK 2026"</span><span style="font-size:11px;color:var(--gray)">Scheduled Jun 20</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>📝 "Business Law Updates"</span><span style="font-size:11px;color:var(--gray)">Scheduled Jul 5</span></div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content">➕ Schedule Content</button>
+        </div>
+      `)}
+    `;
+  },
+  activity(c) {
+    return panel('📈 Ranking Changes (Last 7 Days)', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>▲ "property solicitor hove"</span><span style="color:var(--green)">13 → 9</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>▲ "will writing solicitors"</span><span style="color:var(--green)">8 → 5</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>▼ "divorce lawyer near me"</span><span style="color:#ef4444">6 → 7</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>▲ "family lawyer brighton"</span><span style="color:var(--green)">3 → 2</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return panel('⚙️ SEO Settings', `
+      <div style="display:grid;gap:10px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Target Location</span><span>Brighton, UK (15km radius)</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Competitors Tracked</span><span>3 domains</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Check Frequency</span><span>Daily</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Google Search Console</span><span class="status-pill status-active">Connected</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Google Analytics</span><span class="status-pill status-active">Connected</span></div>
+      </div>
+    `);
+  }
+},
+
+// ─────── 🤖 AEO ───────
+'aeo': {
+  dashboard_count: (c) => '73%',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('AI Visibility Score', '73%', 'var(--teal)')}
+        ${statCard('AI Mentions', '28')}
+        ${statCard('Schema Coverage', '85%')}
+        ${statCard('Tracked Queries', '20')}
+      </div>
+      ${panel('🤖 AI Engine Visibility', `
+        <div style="display:grid;gap:12px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>🟢 ChatGPT</span><span style="color:var(--green)">Mentioned in 15/20 queries</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔵 Perplexity</span><span style="color:var(--teal)">Mentioned in 12/20 queries</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>🟣 Google AI Overviews</span><span style="color:var(--gold)">Mentioned in 8/20 queries</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px"><span>🟠 Claude</span><span style="color:var(--gold)">Mentioned in 6/20 queries</span></div>
+        </div>
+      `)}
+      ${panel('📊 Visibility Trend', `
+        <div style="display:flex;gap:8px;align-items:flex-end;height:100px;padding:0 20px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;background:linear-gradient(180deg,var(--teal),var(--teal)88);border-radius:6px 6px 0 0;height:45px"></div><span style="font-size:10px;color:var(--gray);margin-top:4px">Wk1</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;background:linear-gradient(180deg,var(--teal),var(--teal)88);border-radius:6px 6px 0 0;height:55px"></div><span style="font-size:10px;color:var(--gray);margin-top:4px">Wk2</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;background:linear-gradient(180deg,var(--teal),var(--teal)88);border-radius:6px 6px 0 0;height:60px"></div><span style="font-size:10px;color:var(--gray);margin-top:4px">Wk3</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;background:linear-gradient(180deg,var(--teal),var(--teal)88);border-radius:6px 6px 0 0;height:70px"></div><span style="font-size:10px;color:var(--gray);margin-top:4px">Wk4</span></div>
+        </div>
+        <div style="text-align:center;margin-top:8px"><span style="color:var(--green);font-size:12px">▲ +28% over 4 weeks</span></div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return `
+      ${panel('🏗️ Schema Markup Status', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>LocalBusiness Schema</span><span style="color:var(--green)">✅ Valid</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>FAQ Schema</span><span style="color:var(--green)">✅ Valid (8 Q&As)</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>Service Schema</span><span style="color:var(--green)">✅ Valid</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>Article Schema</span><span style="color:var(--gold)">⚠️ Partial (missing author)</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>Review Schema</span><span style="color:#ef4444">❌ Not implemented</span></div>
+        </div>
+      `)}
+      ${panel('📝 AI Optimization Tasks', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔵</span>Add conversational FAQ section targeting AI queries</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔵</span>Optimize content for "people also ask" questions</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔵</span>Add review/testimonial schema markup</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-gray);border-radius:8px"><span>✅</span><span style="text-decoration:line-through;color:var(--gray)">Improve content structure with clear headings</span></div>
+        </div>
+      `)}
+    `;
+  },
+  activity(c) {
+    return panel('🔔 Recent AI Mentions', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🟢 ChatGPT cited in "best solicitors brighton"</span><span style="font-size:11px;color:var(--green)">New ▲</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔵 Perplexity cited in "conveyancing process UK"</span><span style="font-size:11px;color:var(--green)">New ▲</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🟣 Google AI cited in "family lawyer reviews"</span><span style="font-size:11px;color:var(--gray)">2 days ago</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return panel('⚙️ AEO Settings', `
+      <div style="display:grid;gap:10px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Tracked Queries</span><span>20 queries</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">AI Engines Monitored</span><span>ChatGPT, Perplexity, Google AI, Claude</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Check Frequency</span><span>Weekly</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Alert on New Mentions</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+    `);
+  }
+},
+
+// ─────── 📣 ADS ───────
+'ads': {
+  dashboard_count: (c) => '4 active',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Monthly Spend', '£1,840')}
+        ${statCard('ROAS', '3.2x', 'var(--green)')}
+        ${statCard('Cost/Lead', '£24')}
+        ${statCard('Conversions', '77')}
+      </div>
+      ${panel('📊 Campaign Performance', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">🔍 Search — Solicitors Brighton</div><div style="font-size:11px;color:var(--gray)">£45/day · 23 clicks</div></div>
+            <div style="text-align:right"><div style="color:var(--green);font-weight:600">4.1x ROAS</div><div style="font-size:11px;color:var(--gray)">£18 CPL</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">📍 Google LSAs — Family Law</div><div style="font-size:11px;color:var(--gray)">£30/day · 15 leads</div></div>
+            <div style="text-align:right"><div style="color:var(--green);font-weight:600">3.8x ROAS</div><div style="font-size:11px;color:var(--gray)">£22 CPL</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">📱 Facebook — Brand Awareness</div><div style="font-size:11px;color:var(--gray)">£20/day · 1.2k reach</div></div>
+            <div style="text-align:right"><div style="color:var(--gold);font-weight:600">2.1x ROAS</div><div style="font-size:11px;color:var(--gray)">£35 CPL</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">🔍 Search — Conveyancing</div><div style="font-size:11px;color:var(--gray)">£28/day · 18 clicks</div></div>
+            <div style="text-align:right"><div style="color:var(--green);font-weight:600">3.5x ROAS</div><div style="font-size:11px;color:var(--gray)">£20 CPL</div></div>
+          </div>
+        </div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return `
+      ${panel('🎯 Campaign Manager', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div style="display:flex;align-items:center;gap:10px"><div class="toggle on" onclick="this.classList.toggle('on')"></div><span>🔍 Search — Solicitors Brighton</span></div>
+            <span style="font-size:12px;color:var(--gray)">£45/day</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div style="display:flex;align-items:center;gap:10px"><div class="toggle on" onclick="this.classList.toggle('on')"></div><span>📍 Google LSAs — Family Law</span></div>
+            <span style="font-size:12px;color:var(--gray)">£30/day</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div style="display:flex;align-items:center;gap:10px"><div class="toggle on" onclick="this.classList.toggle('on')"></div><span>📱 Facebook — Brand Awareness</span></div>
+            <span style="font-size:12px;color:var(--gray)">£20/day</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div style="display:flex;align-items:center;gap:10px"><div class="toggle on" onclick="this.classList.toggle('on')"></div><span>🔍 Search — Conveyancing</span></div>
+            <span style="font-size:12px;color:var(--gray)">£28/day</span>
+          </div>
+          <button class="filter-btn" style="padding:8px 16px;width:fit-content">➕ New Campaign</button>
+        </div>
+      `)}
+      ${panel('🎨 Creative Library', `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px">
+          <div style="padding:12px;background:var(--light-gray);border-radius:8px;text-align:center"><div style="font-size:24px;margin-bottom:4px">📝</div>Search Ad v3<div style="color:var(--gray);font-size:10px">CTR 4.2%</div></div>
+          <div style="padding:12px;background:var(--light-gray);border-radius:8px;text-align:center"><div style="font-size:24px;margin-bottom:4px">🖼️</div>Display Banner<div style="color:var(--gray);font-size:10px">CTR 0.8%</div></div>
+          <div style="padding:12px;background:var(--light-gray);border-radius:8px;text-align:center"><div style="font-size:24px;margin-bottom:4px">📱</div>FB Creative A<div style="color:var(--gray);font-size:10px">CTR 1.5%</div></div>
+        </div>
+      `)}
+    `;
+  },
+  activity(c) {
+    return panel('💰 Recent Spend & Conversions', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🎯 Lead — "Solicitors Brighton" (Search)</span><span style="color:var(--teal)">£18.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🎯 Lead — LSA "Family Law"</span><span style="color:var(--teal)">£22.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🎯 Lead — "Conveyancing" (Search)</span><span style="color:var(--teal)">£20.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📊 Daily spend summary</span><span style="color:var(--gray)">£123 today</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return `
+      ${panel('🔗 Ad Platform Connections', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>🔍 Google Ads</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>📍 Google Local Services</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>📱 Meta (Facebook/Instagram)</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>💼 LinkedIn Ads</span><span class="status-pill" style="background:var(--border)">Not Connected</span></div>
+        </div>
+      `)}
+      ${panel('⚙️ Budget Settings', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Monthly Budget Cap</span><span>£2,500</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Current Spend (MTD)</span><span style="color:var(--gold)">£1,840</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Auto-pause at budget</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Alert at 80% budget</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      `)}
+    `;
+  }
+},
+
+// ─────── ⚙️ AUTOMATION ───────
+'automation': {
+  dashboard_count: (c) => '6 flows',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Active Workflows', '6')}
+        ${statCard('Triggers (30d)', '847')}
+        ${statCard('Time Saved', '~42h')}
+        ${statCard('Error Rate', '0.3%', 'var(--green)')}
+      </div>
+      ${panel('⚙️ Active Workflows', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">📧 New Lead → Welcome Email + SMS</div><div style="font-size:11px;color:var(--gray)">324 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">📅 Appointment Reminder (24h + 1h)</div><div style="font-size:11px;color:var(--gray)">198 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">🔄 No-Show → Rebook Sequence</div><div style="font-size:11px;color:var(--gray)">42 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">🎂 Birthday Greeting + Offer</div><div style="font-size:11px;color:var(--gray)">15 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">📝 Post-Visit Review Request</div><div style="font-size:11px;color:var(--gray)">168 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px">
+            <div><div style="font-weight:600">💤 Inactive 90 Days → Reactivation</div><div style="font-size:11px;color:var(--gray)">100 triggers this month</div></div>
+            <span class="status-pill status-active">Active</span>
+          </div>
+        </div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return panel('🔧 Workflow Builder', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px;cursor:pointer">
+          <span>📧 New Lead → Welcome Email + SMS</span>
+          <div style="display:flex;gap:8px"><span class="status-pill status-active">Active</span><span style="color:var(--gray)">⚙️</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px;cursor:pointer">
+          <span>📅 Appointment Reminder (24h + 1h)</span>
+          <div style="display:flex;gap:8px"><span class="status-pill status-active">Active</span><span style="color:var(--gray)">⚙️</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--light-gray);border-radius:8px;cursor:pointer">
+          <span>🔄 No-Show → Rebook Sequence</span>
+          <div style="display:flex;gap:8px"><span class="status-pill status-active">Active</span><span style="color:var(--gray)">⚙️</span></div>
+        </div>
+        <button class="filter-btn" style="padding:8px 16px;width:fit-content">➕ Create Workflow</button>
+      </div>
+    `);
+  },
+  activity(c) {
+    return panel('⚡ Recent Triggers', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📧 Welcome email sent to Sarah Jenkins</span><span style="font-size:11px;color:var(--gray)">2:45 PM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📅 Reminder SMS for Mike Chen (tomorrow 3pm)</span><span style="font-size:11px;color:var(--gray)">1:00 PM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📝 Review request sent to Emma Wilson</span><span style="font-size:11px;color:var(--gray)">12:15 PM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🔄 Reactivation email sent to 5 inactive contacts</span><span style="font-size:11px;color:var(--gray)">10:00 AM</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return `
+      ${panel('🔗 Integrations', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>📧 Email (GHL)</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>💬 SMS (Twilio)</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span>📅 Calendar (Google)</span><span class="status-pill status-active">Connected</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>🌐 Webhooks</span><span class="status-pill status-active">2 active</span></div>
+        </div>
+      `)}
+      ${panel('⚙️ Settings', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Timezone</span><span>Europe/London (BST)</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Quiet Hours</span><span>8 PM – 8 AM (SMS paused)</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="color:var(--gray)">Error Notifications</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      `)}
+    `;
+  }
+},
+
+// ─────── 📋 CRM ───────
+'crm': {
+  dashboard_count: (c) => '342',
+  dashboard(c) {
+    return `
+      <div class="stat-grid">
+        ${statCard('Total Contacts', '342')}
+        ${statCard('Pipeline Value', '£48k', 'var(--teal)')}
+        ${statCard('New (30d)', '28')}
+        ${statCard('Conversion Rate', '32%', 'var(--green)')}
+      </div>
+      ${panel('📊 Pipeline Overview', `
+        <div class="pipeline-board">
+          <div class="pipeline-col"><div class="pipeline-col-header">New Leads <span>12</span></div>
+            <div class="pipeline-card"><div class="pc-name">Sarah Jenkins</div><div class="pc-value">£500</div></div>
+            <div class="pipeline-card"><div class="pc-name">Tom Wright</div><div class="pc-value">£800</div></div>
+            <div class="pipeline-card"><div class="pc-name">Aisha Khan</div><div class="pc-value">£300</div></div>
+          </div>
+          <div class="pipeline-col"><div class="pipeline-col-header">Contacted <span>8</span></div>
+            <div class="pipeline-card"><div class="pc-name">Mike Chen</div><div class="pc-value">£1,200</div></div>
+            <div class="pipeline-card"><div class="pc-name">Linda Park</div><div class="pc-value">£600</div></div>
+          </div>
+          <div class="pipeline-col"><div class="pipeline-col-header">Consultation <span>5</span></div>
+            <div class="pipeline-card"><div class="pc-name">Emma Wilson</div><div class="pc-value">£2,500</div></div>
+            <div class="pipeline-card"><div class="pc-name">David Brown</div><div class="pc-value">£1,800</div></div>
+          </div>
+          <div class="pipeline-col"><div class="pipeline-col-header">Won <span>3</span></div>
+            <div class="pipeline-card"><div class="pc-name">James Lee</div><div class="pc-value">£3,200</div></div>
+            <div class="pipeline-card"><div class="pc-name">Rachel Green</div><div class="pc-value">£1,500</div></div>
+          </div>
+        </div>
+      `)}
+    `;
+  },
+  manage(c) {
+    return `
+      ${panel('📋 Recent Contacts', `
+        <table style="width:100%;font-size:13px">
+          <thead><tr><th style="text-align:left;padding:8px 0">Name</th><th>Status</th><th>Value</th><th>Last Contact</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Sarah Jenkins</td><td><span class="status-pill status-onboarding">New</span></td><td class="revenue">£500</td><td style="color:var(--gray);font-size:12px">Today</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Mike Chen</td><td><span class="status-pill" style="background:var(--teal);color:#fff">Contacted</span></td><td class="revenue">£1,200</td><td style="color:var(--gray);font-size:12px">Yesterday</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Emma Wilson</td><td><span class="status-pill status-active">Consultation</span></td><td class="revenue">£2,500</td><td style="color:var(--gray);font-size:12px">2 days ago</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">James Lee</td><td><span class="status-pill status-active">Won ✅</span></td><td class="revenue">£3,200</td><td style="color:var(--gray);font-size:12px">3 days ago</td></tr>
+          </tbody>
+        </table>
+      `)}
+      ${panel('📞 Follow-Up Queue', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(239,68,68,0.08);border-radius:8px;border-left:3px solid #ef4444"><span>Mike Chen</span><span style="color:#ef4444;font-size:12px">Overdue — 2 days</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(239,68,68,0.08);border-radius:8px;border-left:3px solid #ef4444"><span>Aisha Khan</span><span style="color:#ef4444;font-size:12px">Overdue — 1 day</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px;border-left:3px solid var(--gold)"><span>Tom Wright</span><span style="color:var(--gold);font-size:12px">Due today</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px;border-left:3px solid var(--teal)"><span>Linda Park</span><span style="color:var(--teal);font-size:12px">Due tomorrow</span></div>
+        </div>
+      `)}
+    `;
+  },
+  activity(c) {
+    return panel('📈 Recent Activity', `
+      <div style="display:grid;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🆕 New lead: Sarah Jenkins (Website form)</span><span style="font-size:11px;color:var(--gray)">2:45 PM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>✅ Deal won: James Lee (£3,200)</span><span style="font-size:11px;color:var(--gray)">1:30 PM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📞 Call logged: Mike Chen (4 min)</span><span style="font-size:11px;color:var(--gray)">11:00 AM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📧 Email opened: Emma Wilson</span><span style="font-size:11px;color:var(--gray)">9:15 AM</span></div>
+      </div>
+    `);
+  },
+  config(c) {
+    return `
+      ${panel('📋 Pipeline Stages', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>1️⃣ New Lead</span><span style="color:var(--gray)">12 contacts</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>2️⃣ Contacted</span><span style="color:var(--gray)">8 contacts</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>3️⃣ Consultation Booked</span><span style="color:var(--gray)">5 contacts</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>4️⃣ Won</span><span style="color:var(--green)">3 contacts</span></div>
+        </div>
+      `)}
+      ${panel('🏷️ Lead Sources', `
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>🌐 Website Form</span><span style="color:var(--gray)">42%</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>📞 Phone (AI Agent)</span><span style="color:var(--gray)">28%</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>💬 Chatbot</span><span style="color:var(--gray)">18%</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>📣 Google Ads</span><span style="color:var(--gray)">12%</span></div>
+        </div>
+      `)}
+    `;
+  }
+},
+
+}; // end SERVICE_WORKSPACE
 // ===== RENDER CLIENTS =====
 function renderClients() {
   let clients = allClients;
