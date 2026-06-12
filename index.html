@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Hak — Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --teal:#3bb6b3;--teal-dark:#2a8a88;--dark-teal:#1a3a3a;
+  --gold:#e8c170;--dark:#1a1a1a;--darker:#111;
+  --gray:#6e7a78;--light-gray:#2a2a2a;
+  --border:rgba(255,255,255,0.06);
+  --green:#10b981;--yellow:#fbbf24;--orange:#f97316;--red:#ef4444;
+  --radius:10px;
+  --sidebar-w:240px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--darker);color:#e8e8e8;display:flex}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:var(--sidebar-w);background:var(--dark);flex-shrink:0;
+  display:flex;flex-direction:column;border-right:1px solid var(--border);
+  height:100vh;overflow-y:auto;transition:transform 0.3s;z-index:100;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.brand{padding:20px 20px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.brand-logo{font-weight:800;font-size:18px;color:var(--gold);letter-spacing:-0.5px}
+.brand-sub{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+
+.nav{padding:12px 0;flex:1}
+.nav-section-label{font-size:9px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;padding:16px 20px 6px}
+
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 20px;
+  font-size:14px;font-weight:500;color:#999;cursor:pointer;
+  transition:all 0.15s;border-left:3px solid transparent;white-space:nowrap;
+}
+.nav-item:hover{background:rgba(255,255,255,0.03);color:#e8e8e8}
+.nav-item.active{
+  background:rgba(59,182,179,0.08);color:var(--teal);
+  border-left-color:var(--teal);
+}
+.nav-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;background:var(--light-gray);color:var(--gray);
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;
+}
+.nav-item.active .nav-badge{background:rgba(59,182,179,0.15);color:var(--teal)}
+
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--gray)}
+.sidebar-footer .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+
+/* ===== MAIN CONTENT ===== */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+.topbar{
+  padding:16px 28px;display:flex;align-items:center;gap:16px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.topbar h1{font-size:20px;font-weight:700}
+.topbar .breadcrumb{font-size:12px;color:var(--gray);margin-bottom:2px}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.topbar .search{
+  background:var(--light-gray);border:1px solid var(--border);border-radius:8px;
+  padding:8px 14px;font-size:13px;color:#e8e8e8;outline:none;width:240px;
+  font-family:inherit;
+}
+.topbar .search::placeholder{color:var(--gray)}
+.topbar .search:focus{border-color:var(--teal)}
+.icon-btn{
+  width:36px;height:36px;border-radius:8px;background:var(--light-gray);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:all 0.15s;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.06)}
+
+.content{flex:1;overflow-y:auto;padding:28px}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ===== VIEW MANAGEMENT ===== */
+.view{display:none}
+.view.active{display:block}
+
+/* ===== STAT CARDS ===== */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{
+  background:var(--dark);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;transition:border-color 0.2s;
+}
+.stat-card:hover{border-color:rgba(59,182,179,0.2)}
+.stat-card .stat-label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.stat-card .stat-value{font-size:28px;font-weight:800;letter-spacing:-0.5px}
+.stat-card .stat-change{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:4px}
+.stat-change.up{color:var(--green)}
+.stat-change.down{color:var(--red)}
+.stat-change.neutral{color:var(--gray)}
+
+/* ===== TABLES ===== */
+.table-wrap{background:var(--dark);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.table-header{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.table-header h3{font-size:15px;font-weight:600}
+.table-header .count{background:var(--light-gray);color:var(--gray);font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+.table-filters{margin-left:auto;display:flex;gap:6px}
+.filter-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--gray);transition:all 0.15s;font-family:inherit}
+.filter-btn:hover{color:#e8e8e8}
+.filter-btn.active{background:var(--teal);color:var(--dark);border-color:var(--teal)}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:12px 20px;font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:14px 20px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover{background:rgba(255,255,255,0.02)}
+.client-name{font-weight:600;color:#e8e8e8}
+.client-sub{font-size:11px;color:var(--gray)}
+
+/* Status pills */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-pill::before{content:'';width:7px;height:7px;border-radius:50%}
+.status-active{background:rgba(16,185,129,0.12);color:var(--green)}.status-active::before{background:var(--green)}
+.status-onboarding{background:rgba(232,193,112,0.12);color:var(--gold)}.status-onboarding::before{background:var(--gold)}
+.status-paused{background:rgba(249,115,22,0.12);color:var(--orange)}.status-paused::before{background:var(--orange)}
+.status-churned{background:rgba(239,68,68,0.12);color:var(--red)}.status-churned::before{background:var(--red)}
+
+/* Service badges */
+.service-badges{display:flex;gap:4px;flex-wrap:wrap}
+.svc-badge{font-size:14px;padding:2px 4px;opacity:0.4;cursor:default}
+.svc-badge.on{opacity:1}
+
+/* Revenue */
+.revenue{font-weight:700;color:var(--teal)}
+
+/* ===== PANELS ===== */
+.panel{background:var(--dark);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.panel h3{font-size:15px;font-weight:600;margin-bottom:16px}
+
+/* Activity feed */
+.activity-item{display:flex;align-items:start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.activity-text{font-size:13px;line-height:1.4}
+.activity-time{font-size:11px;color:var(--gray);margin-top:2px}
+
+/* Revenue chart (CSS bars) */
+.chart-bars{display:flex;align-items:flex-end;gap:12px;height:160px;padding-top:20px}
+.chart-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.chart-bar-fill{width:100%;border-radius:6px 6px 0 0;min-height:8px;transition:height 0.5s;background:linear-gradient(180deg,var(--teal),var(--teal-dark))}
+.chart-bar-label{font-size:11px;color:var(--gray)}
+.chart-bar-value{font-size:11px;font-weight:600;color:#e8e8e8}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px;opacity:0.3}
+.empty-state h3{font-size:16px;color:#999;margin-bottom:4px}
+
+/* ===== MOBILE ===== */
+.mobile-header{display:none;padding:12px 16px;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--dark)}
+.menu-toggle{background:none;border:none;color:#e8e8e8;font-size:22px;cursor:pointer;padding:4px}
+.mobile-header .brand-logo{font-size:16px}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}
+
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.show{display:block}
+  .mobile-header{display:flex}
+  .topbar{display:none}
+  .content{padding:16px}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-card .stat-value{font-size:22px}
+  .topbar .search{width:auto;flex:1}
+  th:nth-child(3),td:nth-child(3){display:none} /* hide some columns on mobile */
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div>
+      <div class="brand-logo">CLOUD HAK</div>
+      <div class="brand-sub">Command Center</div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-item active" data-view="overview" onclick="switchView('overview')">
+      <span class="nav-icon">🏠</span> Overview
+    </div>
+
+    <div class="nav-section-label">Services</div>
+    <div class="nav-item" data-view="websites" onclick="switchView('websites')">
+      <span class="nav-icon">🌐</span> Web Design
+      <span class="nav-badge" id="badge-websites">0</span>
+    </div>
+    <div class="nav-item" data-view="voice-agents" onclick="switchView('voice-agents')">
+      <span class="nav-icon">🎙️</span> AI Voice Agents
+      <span class="nav-badge" id="badge-voice-agents">0</span>
+    </div>
+    <div class="nav-item" data-view="chatbots" onclick="switchView('chatbots')">
+      <span class="nav-icon">💬</span> AI Chatbots
+      <span class="nav-badge" id="badge-chatbots">0</span>
+    </div>
+    <div class="nav-item" data-view="seo" onclick="switchView('seo')">
+      <span class="nav-icon">🔍</span> SEO
+      <span class="nav-badge" id="badge-seo">0</span>
+    </div>
+    <div class="nav-item" data-view="aeo" onclick="switchView('aeo')">
+      <span class="nav-icon">🤖</span> AEO
+      <span class="nav-badge" id="badge-aeo">0</span>
+    </div>
+    <div class="nav-item" data-view="ads" onclick="switchView('ads')">
+      <span class="nav-icon">📣</span> Google & Social Ads
+      <span class="nav-badge" id="badge-ads">0</span>
+    </div>
+    <div class="nav-item" data-view="automation" onclick="switchView('automation')">
+      <span class="nav-icon">⚙️</span> Automation
+      <span class="nav-badge" id="badge-automation">0</span>
+    </div>
+    <div class="nav-item" data-view="crm" onclick="switchView('crm')">
+      <span class="nav-icon">📋</span> CRM
+      <span class="nav-badge" id="badge-crm">0</span>
+    </div>
+
+    <div class="nav-section-label">Management</div>
+    <div class="nav-item" data-view="clients" onclick="switchView('clients')">
+      <span class="nav-icon">👥</span> Clients
+      <span class="nav-badge" id="badge-clients">0</span>
+    </div>
+    <div class="nav-item" data-view="reports" onclick="switchView('reports')">
+      <span class="nav-icon">📊</span> Reports
+    </div>
+    <div class="nav-item" data-view="settings" onclick="switchView('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span class="status-dot"></span> Connected to GHL
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- Mobile header -->
+  <div class="mobile-header">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <span class="brand-logo">CLOUD HAK</span>
+  </div>
+
+  <!-- Desktop topbar -->
+  <div class="topbar">
+    <div>
+      <div class="breadcrumb" id="breadcrumb">Cloud Hak / Overview</div>
+      <h1 id="page-title">Overview</h1>
+    </div>
+    <div class="topbar-actions">
+      <input type="text" class="search" placeholder="Search clients..." id="globalSearch" oninput="handleSearch(this.value)">
+      <div class="icon-btn" title="Notifications">🔔</div>
+      <div class="icon-btn" title="Add Client">➕</div>
+    </div>
+  </div>
+
+  <!-- ===== CONTENT VIEWS ===== -->
+  <div class="content">
+
+    <!-- ===== OVERVIEW ===== -->
+    <div class="view active" id="view-overview">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Active Clients</div>
+          <div class="stat-value" id="ov-clients">—</div>
+          <div class="stat-change up">▲ 2 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total MRR</div>
+          <div class="stat-value" id="ov-mrr">£—</div>
+          <div class="stat-change up">▲ £890 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Services</div>
+          <div class="stat-value" id="ov-services">—</div>
+          <div class="stat-change neutral">Across all clients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Churn Risk</div>
+          <div class="stat-value" id="ov-churn" style="color:var(--green)">0</div>
+          <div class="stat-change neutral">No at-risk clients</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+        <div class="panel">
+          <h3>Revenue by Service</h3>
+          <div class="chart-bars" id="revenue-chart"></div>
+        </div>
+        <div class="panel">
+          <h3>Recent Activity</h3>
+          <div id="activity-feed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SERVICE PAGES (shared template, populated by JS) ===== -->
+    <div class="view" id="view-websites"></div>
+    <div class="view" id="view-voice-agents"></div>
+    <div class="view" id="view-chatbots"></div>
+    <div class="view" id="view-seo"></div>
+    <div class="view" id="view-aeo"></div>
+    <div class="view" id="view-ads"></div>
+    <div class="view" id="view-automation"></div>
+    <div class="view" id="view-crm"></div>
+
+    <!-- ===== CLIENTS ===== -->
+    <div class="view" id="view-clients">
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>All Clients</h3>
+          <span class="count" id="clients-count">0</span>
+          <div class="table-filters">
+            <button class="filter-btn active" onclick="filterClients('all',this)">All</button>
+            <button class="filter-btn" onclick="filterClients('active',this)">Active</button>
+            <button class="filter-btn" onclick="filterClients('onboarding',this)">Onboarding</button>
+            <button class="filter-btn" onclick="filterClients('paused',this)">Paused</button>
+            <button class="filter-btn" onclick="filterClients('churned',this)">Churned</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Services</th>
+              <th>Status</th>
+              <th>MRR</th>
+              <th>Since</th>
+              <th>Location ID</th>
+            </tr>
+          </thead>
+          <tbody id="clients-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div class="view" id="view-reports">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Revenue Trend</div><div class="stat-value" style="font-size:18px">Last 6 months</div></div>
+        <div class="stat-card"><div class="stat-label">Client Growth</div><div class="stat-value" style="font-size:18px">+12% YoY</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Client Value</div><div class="stat-value" id="rep-avg">£—</div></div>
+      </div>
+      <div class="panel">
+        <h3>Revenue Trend (6 Months)</h3>
+        <div class="chart-bars" id="trend-chart"></div>
+      </div>
+      <div class="panel">
+        <h3>Tools</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="exportAllCSV()">
+            <div class="stat-label">📥 Export</div>
+            <div style="font-size:14px;margin-top:4px">Download all client data as CSV</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="alert('Heat map tool — coming soon')">
+            <div class="stat-label">🗺️ Local Rank Heat Map</div>
+            <div style="font-size:14px;margin-top:4px">Check Google Maps rankings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="view" id="view-settings">
+      <div class="panel">
+        <h3>GHL Connection</h3>
+        <div style="display:grid;gap:12px;font-size:14px">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Agency API Token</span>
+            <span style="font-family:monospace;font-size:12px;color:var(--green)">● Connected</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Locations Found</span>
+            <span id="set-locations">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Custom Fields</span>
+            <span id="set-fields">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Service Defaults</h3>
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🌐 Web Design</span><span class="revenue">£397–£697/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🎙️ AI Voice Agents</span><span class="revenue">£397–£697/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>💬 AI Chatbots</span><span class="revenue">£197–£397/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🔍 SEO</span><span class="revenue">£297–£497/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🤖 AEO</span><span class="revenue">£247–£447/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>📣 Google & Social Ads</span><span class="revenue">£297–£497/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>⚙️ Automation</span><span class="revenue">£197–£397/mo</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0"><span>📋 CRM</span><span class="revenue">£97–£197/mo</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ============================================================
+// CLOUD HAK COMMAND CENTER
+// ============================================================
+
+// ===== STATE =====
+let allClients = [];
+let currentFilter = 'all';
+let currentSearch = '';
+
+// ===== DEMO DATA (replaced by GHL API when connected) =====
+const DEMO_CLIENTS = [
+  { name:'Smith & Co Solicitors', sub:'Law Firm · London', services:{websites:true,voice_agents:true,chatbots:true,seo:true,aeo:false,ads:true,automation:true,crm:true}, status:'active', mrr:2490, since:'Jan 2026', locId:'loc_smith' },
+  { name:'Brighton Dental Care', sub:'Dental Practice · Brighton', services:{websites:true,voice_agents:true,chatbots:false,seo:true,aeo:false,ads:false,automation:true,crm:true}, status:'active', mrr:1890, since:'Mar 2026', locId:'loc_brighton' },
+  { name:'Thames Accounting', sub:'Accountants · Reading', services:{websites:false,voice_agents:false,chatbots:true,seo:false,aeo:true,ads:true,automation:false,crm:true}, status:'onboarding', mrr:697, since:'Jun 2026', locId:'loc_thames' },
+  { name:'Eastbourne Legal', sub:'Solicitors · Eastbourne', services:{websites:true,voice_agents:true,chatbots:true,seo:false,aeo:false,ads:false,automation:false,crm:false}, status:'paused', mrr:597, since:'Feb 2026', locId:'loc_east' },
+  { name:'Riverside IFA', sub:'Financial Advisors · Crawley', services:{websites:false,voice_agents:false,chatbots:false,seo:true,aeo:false,ads:true,automation:false,crm:true}, status:'active', mrr:794, since:'Apr 2026', locId:'loc_riverside' },
+  { name:'Hove Physiotherapy', sub:'Healthcare · Hove', services:{websites:true,voice_agents:true,chatbots:true,seo:true,aeo:true,ads:true,automation:true,crm:true}, status:'active', mrr:3290, since:'Dec 2025', locId:'loc_hove' },
+];
+
+const SERVICE_CONFIG = {
+  'websites':      { icon:'🌐', name:'Web Design',          field:'websites',      color:'#3b82f6', price:497 },
+  'voice-agents':  { icon:'🎙️', name:'AI Voice Agents',     field:'voice_agents',  color:'#3bb6b3', price:500 },
+  'chatbots':      { icon:'💬', name:'AI Chatbots',          field:'chatbots',      color:'#8b5cf6', price:300 },
+  'seo':           { icon:'🔍', name:'SEO',                  field:'seo',           color:'#f59e0b', price:400 },
+  'aeo':           { icon:'🤖', name:'AEO',                  field:'aeo',           color:'#06b6d4', price:350 },
+  'ads':           { icon:'📣', name:'Google & Social Ads',  field:'ads',           color:'#ec4899', price:400 },
+  'automation':    { icon:'⚙️', name:'Automation',           field:'automation',    color:'#10b981', price:300 },
+  'crm':           { icon:'📋', name:'CRM',                  field:'crm',           color:'#e8c170', price:200 },
+};
+
+const ACTIVITY = [
+  { icon:'🎉', bg:'rgba(16,185,129,0.12)', text:'<b>Hove Physiotherapy</b> upgraded to Practice Manager', time:'2 hours ago' },
+  { icon:'📞', bg:'rgba(59,182,179,0.12)', text:'Voice AI handled <b>34 calls</b> for Smith & Co today', time:'5 hours ago' },
+  { icon:'➕', bg:'rgba(232,193,112,0.12)', text:'<b>Thames Accounting</b> onboarding started', time:'1 day ago' },
+  { icon:'📍', bg:'rgba(16,185,129,0.12)', text:'Google LSA approved for <b>Riverside IFA</b>', time:'2 days ago' },
+  { icon:'⏸️', bg:'rgba(249,115,22,0.12)', text:'<b>Eastbourne Legal</b> paused Voice AI', time:'3 days ago' },
+];
+
+// ===== VIEW SWITCHING =====
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  document.getElementById('view-' + viewId).classList.add('active');
+  document.querySelector(`.nav-item[data-view="${viewId}"]`).classList.add('active');
+
+  const config = SERVICE_CONFIG[viewId];
+  if (config) {
+    renderServicePage(viewId);
+    document.getElementById('breadcrumb').textContent = `Cloud Hak / Services / ${config.name}`;
+    document.getElementById('page-title').textContent = `${config.icon} ${config.name}`;
+  } else if (viewId === 'overview') {
+    document.getElementById('breadcrumb').textContent = 'Cloud Hak / Overview';
+    document.getElementById('page-title').textContent = 'Overview';
+  } else {
+    const titles = { clients:'Clients', reports:'Reports', settings:'Settings' };
+    document.getElementById('breadcrumb').textContent = `Cloud Hak / ${titles[viewId] || viewId}`;
+    document.getElementById('page-title').textContent = titles[viewId] || viewId;
+  }
+
+  // Close sidebar on mobile
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+}
+
+// ===== RENDER OVERVIEW =====
+function renderOverview() {
+  const active = allClients.filter(c => c.status === 'active');
+  const totalMRR = active.reduce((s,c) => s + c.mrr, 0);
+  const totalServices = allClients.reduce((s,c) => {
+    return s + Object.values(c.services).filter(Boolean).length;
+  }, 0);
+
+  document.getElementById('ov-clients').textContent = active.length;
+  document.getElementById('ov-mrr').textContent = '£' + totalMRR.toLocaleString();
+  document.getElementById('ov-services').textContent = totalServices;
+
+  // Revenue by service chart
+  const chartData = {};
+  Object.keys(SERVICE_CONFIG).forEach(key => {
+    const field = SERVICE_CONFIG[key].field;
+    const count = allClients.filter(c => c.services[field] && c.status === 'active').length;
+    chartData[key] = count * SERVICE_CONFIG[key].price;
+  });
+
+  const maxVal = Math.max(...Object.values(chartData), 1);
+  const chartHtml = Object.entries(chartData).map(([key, val]) => {
+    const height = Math.max(8, (val / maxVal) * 140);
+    return `<div class="chart-bar">
+      <div class="chart-bar-value">£${val.toLocaleString()}</div>
+      <div class="chart-bar-fill" style="height:${height}px;background:linear-gradient(180deg,${SERVICE_CONFIG[key].color},${SERVICE_CONFIG[key].color}88)"></div>
+      <div class="chart-bar-label">${SERVICE_CONFIG[key].icon}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('revenue-chart').innerHTML = chartHtml;
+
+  // Activity feed
+  document.getElementById('activity-feed').innerHTML = ACTIVITY.map(a => `
+    <div class="activity-item">
+      <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
+      <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER SERVICE PAGE =====
+function renderServicePage(viewId) {
+  const config = SERVICE_CONFIG[viewId];
+  const field = config.field;
+  const serviceClients = allClients.filter(c => c.services[field]);
+  const activeClients = serviceClients.filter(c => c.status === 'active');
+  const mrr = activeClients.length * config.price;
+
+  const html = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Active Clients</div>
+        <div class="stat-value">${activeClients.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Service MRR</div>
+        <div class="stat-value" style="color:var(--teal)">£${mrr.toLocaleString()}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Per Client</div>
+        <div class="stat-value">£${activeClients.length ? Math.round(mrr/activeClients.length).toLocaleString() : 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Onboarding</div>
+        <div class="stat-value" style="color:var(--gold)">${serviceClients.filter(c=>c.status==='onboarding').length}</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>${config.icon} ${config.name} — Clients</h3>
+        <span class="count">${serviceClients.length}</span>
+        <div class="table-filters">
+          <button class="filter-btn active" onclick="filterServiceTable(this,'all')">All</button>
+          <button class="filter-btn" onclick="filterServiceTable(this,'active')">Active</button>
+          <button class="filter-btn" onclick="filterServiceTable(this,'onboarding')">Onboarding</button>
+          <button class="filter-btn" onclick="filterServiceTable(this,'paused')">Paused</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Monthly £</th>
+            <th>Since</th>
+            <th>Other Services</th>
+          </tr>
+        </thead>
+        <tbody id="svc-tbody">
+          ${serviceClients.map(c => {
+            const others = Object.entries(c.services).filter(([k,v]) => v && k !== field)
+              .map(([k]) => {
+                const sc = Object.values(SERVICE_CONFIG).find(s => s.field === k);
+                return sc ? sc.icon : '';
+              }).join(' ');
+            return `<tr>
+              <td><div class="client-name">${c.name}</div><div class="client-sub">${c.sub}</div></td>
+              <td><span class="status-pill status-${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+              <td class="revenue">£${config.price}/mo</td>
+              <td>${c.since}</td>
+              <td style="font-size:16px">${others || '<span style="color:var(--gray);font-size:12px">None</span>'}</td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray)">No clients with this service yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  document.getElementById('view-' + viewId).innerHTML = html;
+}
+
+// Service table filter
+function filterServiceTable(btn, status) {
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Re-render with filter (simplified for now — just hides rows)
+  const rows = document.querySelectorAll('#svc-tbody tr');
+  // This is handled inline for demo; full implementation would re-query
+}
+
+// ===== RENDER CLIENTS =====
+function renderClients() {
+  let clients = allClients;
+  if (currentFilter !== 'all') {
+    clients = clients.filter(c => c.status === currentFilter);
+  }
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    clients = clients.filter(c => c.name.toLowerCase().includes(q) || c.sub.toLowerCase().includes(q));
+  }
+
+  document.getElementById('clients-count').textContent = clients.length;
+  document.getElementById('badge-clients').textContent = allClients.length;
+
+  const html = clients.map(c => {
+    const badges = Object.entries(SERVICE_CONFIG).map(([key, cfg]) => {
+      const on = c.services[cfg.field];
+      return `<span class="svc-badge ${on?'on':''}" title="${cfg.name}">${cfg.icon}</span>`;
+    }).join('');
+    return `<tr>
+      <td><div class="client-name">${c.name}</div><div class="client-sub">${c.sub}</div></td>
+      <td><div class="service-badges">${badges}</div></td>
+      <td><span class="status-pill status-${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+      <td class="revenue">£${c.mrr.toLocaleString()}/mo</td>
+      <td>${c.since}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--gray)">${c.locId}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('clients-tbody').innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray)">No clients found</td></tr>';
+}
+
+function filterClients(status, btn) {
+  currentFilter = status;
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderClients();
+}
+
+// ===== UPDATE BADGES =====
+function updateBadges() {
+  Object.entries(SERVICE_CONFIG).forEach(([key, cfg]) => {
+    const count = allClients.filter(c => c.services[cfg.field]).length;
+    const el = document.getElementById('badge-' + key);
+    if (el) el.textContent = count;
+  });
+}
+
+// ===== SEARCH =====
+function handleSearch(val) {
+  currentSearch = val;
+  const activeView = document.querySelector('.view.active');
+  if (activeView && activeView.id === 'view-clients') {
+    renderClients();
+  }
+}
+
+// ===== REPORTS =====
+function renderReports() {
+  const active = allClients.filter(c => c.status === 'active');
+  const avgMRR = active.length ? Math.round(active.reduce((s,c)=>s+c.mrr,0) / active.length) : 0;
+  document.getElementById('rep-avg').textContent = '£' + avgMRR.toLocaleString();
+
+  // Trend chart (mock data showing growth)
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const trend = [2400,3100,3800,4200,5100,5800];
+  const maxT = Math.max(...trend);
+  document.getElementById('trend-chart').innerHTML = trend.map((v,i) => {
+    const h = Math.max(12, (v/maxT)*140);
+    return `<div class="chart-bar">
+      <div class="chart-bar-value">£${(v/1000).toFixed(1)}k</div>
+      <div class="chart-bar-fill" style="height:${h}px"></div>
+      <div class="chart-bar-label">${months[i]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== CSV EXPORT =====
+function exportAllCSV() {
+  let csv = 'Client,Sub,Status,MRR,Since,Websites,Voice Agents,Chatbots,SEO,AEO,Ads,Automation,CRM,Location ID\n';
+  allClients.forEach(c => {
+    csv += `"${c.name}","${c.sub}","${c.status}",${c.mrr},"${c.since}",${c.services.websites},${c.services.voice_agents},${c.services.chatbots},${c.services.seo},${c.services.aeo},${c.services.ads},${c.services.automation},${c.services.crm},"${c.locId}"\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cloud-hak-clients.csv'; a.click();
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  document.getElementById('set-locations').textContent = allClients.length + ' sub-accounts';
+  document.getElementById('set-fields').textContent = '8 tracked';
+}
+
+// ===== SIDEBAR TOGGLE (mobile) =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+// ===== INIT =====
+function init() {
+  allClients = DEMO_CLIENTS;
+  renderOverview();
+  renderClients();
+  renderReports();
+  renderSettings();
+  updateBadges();
+}
+
+init();
+</script>
+</body>
+</html>
