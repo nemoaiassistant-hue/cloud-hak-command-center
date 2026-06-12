@@ -65,7 +65,7 @@
       "website": "airwayclinic.se",
       "services": {
         "websites": true,
-        "voice_agents": true,
+        "voice_agents": false,
         "chatbots": false,
         "seo": true,
         "aeo": false,
@@ -74,7 +74,7 @@
         "crm": true
       },
       "status": "active",
-      "mrr": 1897,
+      "mrr": 1397,
       "since": "Dec 2025",
       "locId": "Z9UtrrCvJc8ObhTIILLF"
     },
