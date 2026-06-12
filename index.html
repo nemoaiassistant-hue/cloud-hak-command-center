@@ -532,24 +532,43 @@ tr:hover{background:var(--border)}
     <!-- ===== REPORTS ===== -->
     <div class="view" id="view-reports">
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Revenue Trend</div><div class="stat-value" style="font-size:18px">Last 6 months</div></div>
-        <div class="stat-card"><div class="stat-label">Client Growth</div><div class="stat-value" style="font-size:18px">+12% YoY</div></div>
+        <div class="stat-card"><div class="stat-label">Total MRR</div><div class="stat-value" style="color:var(--teal)" id="rep-total-mrr">£—</div></div>
         <div class="stat-card"><div class="stat-label">Avg Client Value</div><div class="stat-value" id="rep-avg">£—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value" id="rep-active-count">—</div></div>
+        <div class="stat-card"><div class="stat-label">Churn Rate</div><div class="stat-value" style="color:var(--green)" id="rep-churn">0%</div></div>
       </div>
       <div class="panel">
-        <h3>Revenue Trend (6 Months)</h3>
+        <h3>📈 Revenue Trend (6 Months)</h3>
         <div class="chart-bars" id="trend-chart"></div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="panel">
+          <h3>📊 Revenue by Service</h3>
+          <div id="rep-service-breakdown"></div>
+        </div>
+        <div class="panel">
+          <h3>👥 Client Growth</h3>
+          <div class="chart-bars" id="growth-chart"></div>
+        </div>
+      </div>
       <div class="panel">
-        <h3>Tools</h3>
+        <h3>🏢 Client Revenue Ranking</h3>
+        <div id="rep-client-ranking"></div>
+      </div>
+      <div class="panel">
+        <h3>🛠️ Tools</h3>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="exportAllCSV()">
-            <div class="stat-label">📥 Export</div>
-            <div style="font-size:14px;margin-top:4px">Download all client data as CSV</div>
+            <div class="stat-label">📥 Export CSV</div>
+            <div style="font-size:14px;margin-top:4px">Download all client data</div>
           </div>
-          <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="alert('Heat map tool — coming soon')">
-            <div class="stat-label">🗺️ Local Rank Heat Map</div>
-            <div style="font-size:14px;margin-top:4px">Check Google Maps rankings</div>
+          <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="window.open('https://nemoaiassistant-hue.github.io/local-rank-heatmap/','_blank')">
+            <div class="stat-label">🗺️ Heat Map Tool</div>
+            <div style="font-size:14px;margin-top:4px">Google Maps rank checker</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;flex:1;min-width:200px" onclick="exportMonthlyReport()">
+            <div class="stat-label">📄 Monthly Report</div>
+            <div style="font-size:14px;margin-top:4px">Generate summary PDF</div>
           </div>
         </div>
       </div>
@@ -557,34 +576,83 @@ tr:hover{background:var(--border)}
 
     <!-- ===== SETTINGS ===== -->
     <div class="view" id="view-settings">
-      <div class="panel">
-        <h3>GHL Connection</h3>
-        <div style="display:grid;gap:12px;font-size:14px">
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Agency API Token</span>
-            <span style="font-family:monospace;font-size:12px;color:var(--green)">● Connected</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Locations Found</span>
-            <span id="set-locations">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Custom Fields</span>
-            <span id="set-fields">—</span>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">GHL Agency</div><div class="stat-value" style="font-size:16px;color:var(--green)">● Connected</div></div>
+        <div class="stat-card"><div class="stat-label">Sub-Accounts</div><div class="stat-value" id="set-locations">—</div></div>
+        <div class="stat-card"><div class="stat-label">Team Members</div><div class="stat-value">3</div></div>
+        <div class="stat-card"><div class="stat-label">Plan</div><div class="stat-value" style="font-size:16px;color:var(--teal)">Agency</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <!-- Team Management -->
+        <div class="panel">
+          <h3>👥 Team Members</h3>
+          <div id="set-team"></div>
+        </div>
+
+        <!-- Branding -->
+        <div class="panel">
+          <h3>🎨 Branding</h3>
+          <div style="display:grid;gap:12px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--gray)">Agency Name</span>
+              <input class="form-input" style="width:160px" value="Cloud Hak" id="set-agency-name">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--gray)">Primary Color</span>
+              <input type="color" value="#3bb6b3" style="width:50px;height:30px;border:none;border-radius:6px;background:none;cursor:pointer" onchange="document.documentElement.style.setProperty('--teal',this.value)">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--gray)">Logo</span>
+              <span style="font-size:12px">✅ cloud-hak-logo.svg</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--gray)">Contact Email</span>
+              <input class="form-input" style="width:180px" value="info@cloud-hak.com">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+              <span style="color:var(--gray)">Support Phone</span>
+              <input class="form-input" style="width:160px" value="+44 1273 000 000">
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- GHL Connection -->
       <div class="panel">
-        <h3>Service Defaults</h3>
-        <div style="display:grid;gap:8px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🌐 Web Design</span><span class="revenue">£397–£697/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🎙️ AI Voice Agents</span><span class="revenue">£397–£697/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>💬 AI Chatbots</span><span class="revenue">£197–£397/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🔍 SEO</span><span class="revenue">£297–£497/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>🤖 AEO</span><span class="revenue">£247–£447/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>📣 Google & Social Ads</span><span class="revenue">£297–£497/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>⚙️ Automation</span><span class="revenue">£197–£397/mo</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0"><span>📋 CRM</span><span class="revenue">£97–£197/mo</span></div>
+        <h3>🔗 GHL Agency Connection</h3>
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">API Token</span>
+            <span style="font-family:monospace;font-size:12px;color:var(--green)">● Connected (pit-••••)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Locations</span>
+            <span id="set-locations-2">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Custom Fields Tracked</span>
+            <span id="set-fields">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0">
+            <span style="color:var(--gray)">Webhook Endpoint</span>
+            <span style="font-family:monospace;font-size:11px">https://api.cloud-hak.com/webhooks/ghl</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Defaults -->
+      <div class="panel">
+        <h3>💰 Service Pricing Defaults</h3>
+        <div id="set-pricing"></div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="panel" style="border:1px solid rgba(239,68,68,0.3)">
+        <h3 style="color:#ef4444">⚠️ Danger Zone</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="filter-btn" style="padding:8px 16px;border-color:#ef4444;color:#ef4444" onclick="if(confirm('Reset all demo data? This cannot be undone.')) location.reload()">🔄 Reset Demo Data</button>
+          <button class="filter-btn" style="padding:8px 16px;border-color:#ef4444;color:#ef4444" onclick="alert('Disconnect GHL — contact admin')">🔌 Disconnect GHL</button>
         </div>
       </div>
     </div>
@@ -1051,6 +1119,62 @@ function renderClientOverview() {
             <span style="color:var(--gray)">Lifetime Value</span><span class="revenue">£${(c.mrr * 6).toLocaleString()}*</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px">
+      <div class="panel">
+        <h3>👤 Contact Details</h3>
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Contact Name</span><span>${c.contact || '—'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Email</span><span style="font-size:12px">${c.email || '—'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Phone</span><span style="font-size:12px">${c.phone || c.locId}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0">
+            <span style="color:var(--gray)">Location</span><span>${c.city || c.locId}</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>💳 Billing</h3>
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Monthly Fee</span><span class="revenue">£${c.mrr}/mo</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Next Invoice</span><span>1st of next month</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Payment Method</span><span>Direct Debit</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0">
+            <span style="color:var(--gray)">Contract Started</span><span>${c.since}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
+      <div class="panel">
+        <h3>📅 Activity Log</h3>
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;gap:10px;padding:8px;background:var(--light-gray);border-radius:8px"><span>🟢</span><div><div style="font-weight:600">Service activated: ${activeServices[0]?.name || 'Onboarding'}</div><div style="font-size:11px;color:var(--gray)">2 days ago</div></div></div>
+          <div style="display:flex;gap:10px;padding:8px;background:var(--light-gray);border-radius:8px"><span>📄</span><div><div style="font-weight:600">Onboarding form submitted</div><div style="font-size:11px;color:var(--gray)">5 days ago</div></div></div>
+          <div style="display:flex;gap:10px;padding:8px;background:var(--light-gray);border-radius:8px"><span>📧</span><div><div style="font-weight:600">Welcome email sent to ${c.contact || 'client'}</div><div style="font-size:11px;color:var(--gray)">5 days ago</div></div></div>
+          <div style="display:flex;gap:10px;padding:8px;background:var(--light-gray);border-radius:8px"><span>🤝</span><div><div style="font-weight:600">Contract signed (£${c.mrr}/mo)</div><div style="font-size:11px;color:var(--gray)">1 week ago</div></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📝 Notes</h3>
+        <div style="font-size:13px;color:var(--gray);line-height:1.6">
+          ${c.notes || 'No internal notes yet. Click edit to add notes about this client.'}
+        </div>
+        <button class="filter-btn" style="padding:6px 14px;margin-top:10px" onclick="alert('Notes editor — coming soon')">✏️ Edit Notes</button>
       </div>
     </div>
   `;
@@ -1940,13 +2064,18 @@ function handleSearch(val) {
 // ===== REPORTS =====
 function renderReports() {
   const active = allClients.filter(c => c.status === 'active');
-  const avgMRR = active.length ? Math.round(active.reduce((s,c)=>s+c.mrr,0) / active.length) : 0;
-  document.getElementById('rep-avg').textContent = '£' + avgMRR.toLocaleString();
+  const totalMRR = allClients.reduce((s,c)=>s+c.mrr,0);
+  const avgMRR = active.length ? Math.round(totalMRR / active.length) : 0;
 
-  // Trend chart (mock data showing growth)
+  document.getElementById('rep-total-mrr').textContent = '£' + totalMRR.toLocaleString();
+  document.getElementById('rep-avg').textContent = '£' + avgMRR.toLocaleString();
+  document.getElementById('rep-active-count').textContent = active.length;
+  document.getElementById('rep-churn').textContent = '0%';
+
+  // Revenue trend chart (6 months, growing)
   const months = ['Jan','Feb','Mar','Apr','May','Jun'];
-  const trend = [2400,3100,3800,4200,5100,5800];
-  const maxT = Math.max(...trend);
+  const trend = [2400,3100,3800,4200,Math.round(totalMRR*0.85),totalMRR];
+  const maxT = Math.max(...trend,1);
   document.getElementById('trend-chart').innerHTML = trend.map((v,i) => {
     const h = Math.max(12, (v/maxT)*140);
     return `<div class="chart-bar">
@@ -1955,6 +2084,92 @@ function renderReports() {
       <div class="chart-bar-label">${months[i]}</div>
     </div>`;
   }).join('');
+
+  // Client growth chart
+  const growth = [2,3,4,4,5,allClients.length];
+  const maxG = Math.max(...growth,1);
+  document.getElementById('growth-chart').innerHTML = growth.map((v,i) => {
+    const h = Math.max(12, (v/maxG)*140);
+    return `<div class="chart-bar">
+      <div class="chart-bar-value">${v}</div>
+      <div class="chart-bar-fill" style="height:${h}px;background:var(--gold)"></div>
+      <div class="chart-bar-label">${months[i]}</div>
+    </div>`;
+  }).join('');
+
+  // Revenue by service breakdown
+  const svcRevenue = {};
+  Object.values(SERVICE_CONFIG).forEach(sc => { svcRevenue[sc.name] = 0; svcRevenue[sc.name+'_icon'] = sc.icon; });
+  allClients.forEach(c => {
+    Object.entries(c.services).forEach(([k,v]) => {
+      if (v) {
+        const sc = Object.values(SERVICE_CONFIG).find(s => s.field === k);
+        if (sc) svcRevenue[sc.name] = (svcRevenue[sc.name]||0) + sc.price;
+      }
+    });
+  });
+  const totalSvcRev = Object.entries(svcRevenue).filter(([k,v])=>!k.includes('_icon')&&v>0).reduce((s,[k,v])=>s+v,0) || 1;
+  document.getElementById('rep-service-breakdown').innerHTML =
+    Object.entries(svcRevenue)
+      .filter(([k,v]) => !k.includes('_icon') && v > 0)
+      .sort((a,b) => b[1]-a[1])
+      .map(([name,rev]) => {
+        const icon = svcRevenue[name+'_icon'] || '⚙️';
+        const pct = Math.round((rev/totalSvcRev)*100);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+            <span>${icon} ${name}</span>
+            <span class="revenue">£${rev}/mo · ${pct}%</span>
+          </div>
+          <div style="height:8px;background:var(--light-gray);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--teal);border-radius:4px"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+  // Client revenue ranking
+  const ranked = [...allClients].sort((a,b) => b.mrr - a.mrr);
+  const maxMRR = Math.max(...ranked.map(c=>c.mrr), 1);
+  document.getElementById('rep-client-ranking').innerHTML = ranked.map((c,i) => {
+    const pct = Math.round((c.mrr/maxMRR)*100);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:700;color:var(--gray);width:24px">${i+1}</span>
+      <span style="font-size:18px">${c.sub.includes('Dental')?'🦷':c.sub.includes('Solicitor')||c.sub.includes('Legal')?'⚖️':c.sub.includes('Account')?'📊':c.sub.includes('Physio')||c.sub.includes('Health')?'🏥':c.sub.includes('Insurance')||c.sub.includes('IFA')?'💼':'🏢'}</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${c.name}</div>
+        <div style="height:6px;background:var(--light-gray);border-radius:3px;margin-top:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--teal);border-radius:3px"></div>
+        </div>
+      </div>
+      <span class="revenue" style="white-space:nowrap">£${c.mrr}/mo</span>
+    </div>`;
+  }).join('');
+}
+
+function exportMonthlyReport() {
+  const totalMRR = allClients.reduce((s,c)=>s+c.mrr,0);
+  const active = allClients.filter(c => c.status === 'active');
+  const date = new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+
+  const report = `CLOUD HAK — MONTHLY REPORT
+${date}
+${'='.repeat(40)}
+
+TOTAL MRR: £${totalMRR.toLocaleString()}/mo
+ACTIVE CLIENTS: ${active.length}
+AVG CLIENT VALUE: £${active.length ? Math.round(totalMRR/active.length).toLocaleString() : 0}/mo
+
+CLIENT BREAKDOWN:
+${allClients.map(c => `  ${c.name} — £${c.mrr}/mo (${c.status})`).join('\n')}
+
+${'='.repeat(40)}
+Generated: ${new Date().toLocaleString('en-GB')}
+`;
+
+  const blob = new Blob([report], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `cloud-hak-report-${date.replace(/\s/g,'-')}.txt`; a.click();
 }
 
 // ===== CSV EXPORT =====
@@ -1971,8 +2186,49 @@ function exportAllCSV() {
 
 // ===== SETTINGS =====
 function renderSettings() {
-  document.getElementById('set-locations').textContent = allClients.length + ' sub-accounts';
+  const locCount = allClients.length;
+  document.getElementById('set-locations').textContent = locCount + ' sub-accounts';
+  const loc2 = document.getElementById('set-locations-2');
+  if (loc2) loc2.textContent = locCount + ' locations';
   document.getElementById('set-fields').textContent = '8 tracked';
+
+  // Team members
+  const team = [
+    {name:'Nima Hakimmaani', role:'Owner / Admin', email:'nima@cloud-hak.com', avatar:'👨‍💼', status:'active'},
+    {name:'Jarvis (AI)', role:'Automations Agent', email:'jarvis@cloud-hak.com', avatar:'🤖', status:'active'},
+    {name:'Sam (AI Voice)', role:'Receptionist Agent', email:'sam@cloud-hak.com', avatar:'🎙️', status:'active'},
+  ];
+  document.getElementById('set-team').innerHTML = team.map(m => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:24px">${m.avatar}</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${m.name}</div>
+        <div style="font-size:11px;color:var(--gray)">${m.email}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--gray)">${m.role}</div>
+        <span class="status-pill status-active" style="margin-top:2px">Active</span>
+      </div>
+    </div>
+  `).join('') + `<button class="filter-btn" style="padding:8px 16px;margin-top:8px;width:fit-content">➕ Invite Member</button>`;
+
+  // Pricing defaults
+  const pricing = [
+    {icon:'🌐',name:'Web Design',low:397,high:697},
+    {icon:'🎙️',name:'AI Voice Agents',low:397,high:697},
+    {icon:'💬',name:'AI Chatbots',low:197,high:397},
+    {icon:'🔍',name:'SEO',low:297,high:497},
+    {icon:'🤖',name:'AEO',low:247,high:447},
+    {icon:'📣',name:'Google & Social Ads',low:297,high:497},
+    {icon:'⚙️',name:'Automation',low:197,high:397},
+    {icon:'📋',name:'CRM',low:97,high:197},
+  ];
+  document.getElementById('set-pricing').innerHTML = pricing.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span>${p.icon} ${p.name}</span>
+      <span class="revenue">£${p.low}–£${p.high}/mo</span>
+    </div>
+  `).join('');
 }
 
 // ===== SIDEBAR TOGGLE (mobile) =====
