@@ -453,42 +453,8 @@ tr:hover{background:var(--border)}
       <button class="ctx-clear" onclick="clearClientSelection()">← All Clients</button>
     </div>
 
-    <!-- ===== OVERVIEW ===== -->
-    <div class="view active" id="view-overview">
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-label">Active Clients</div>
-          <div class="stat-value" id="ov-clients">—</div>
-          <div class="stat-change up">▲ 2 this month</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total MRR</div>
-          <div class="stat-value" id="ov-mrr">£—</div>
-          <div class="stat-change up">▲ £890 this month</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Active Services</div>
-          <div class="stat-value" id="ov-services">—</div>
-          <div class="stat-change neutral">Across all clients</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Churn Risk</div>
-          <div class="stat-value" id="ov-churn" style="color:var(--green)">0</div>
-          <div class="stat-change neutral">No at-risk clients</div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
-        <div class="panel">
-          <h3>Revenue by Service</h3>
-          <div class="chart-bars" id="revenue-chart"></div>
-        </div>
-        <div class="panel">
-          <h3>Recent Activity</h3>
-          <div id="activity-feed"></div>
-        </div>
-      </div>
-    </div>
+    <!-- ===== OVERVIEW (populated by renderOverview/renderClientOverview) ===== -->
+    <div class="view active" id="view-overview"></div>
 
     <!-- ===== SERVICE PAGES (shared template, populated by JS) ===== -->
     <div class="view" id="view-websites"></div>
@@ -971,10 +937,6 @@ function renderOverview() {
     return s + Object.values(c.services).filter(Boolean).length;
   }, 0);
 
-  document.getElementById('ov-clients').textContent = active.length;
-  document.getElementById('ov-mrr').textContent = '£' + totalMRR.toLocaleString();
-  document.getElementById('ov-services').textContent = totalServices;
-
   // Revenue by service chart
   const chartData = {};
   Object.keys(SERVICE_CONFIG).forEach(key => {
@@ -992,15 +954,49 @@ function renderOverview() {
       <div class="chart-bar-label">${SERVICE_CONFIG[key].icon}</div>
     </div>`;
   }).join('');
-  document.getElementById('revenue-chart').innerHTML = chartHtml;
 
   // Activity feed
-  document.getElementById('activity-feed').innerHTML = ACTIVITY.map(a => `
+  const activityHtml = ACTIVITY.map(a => `
     <div class="activity-item">
       <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
       <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
     </div>
   `).join('');
+
+  document.getElementById('view-overview').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Active Clients</div>
+        <div class="stat-value">${active.length}</div>
+        <div class="stat-change up">▲ ${Math.min(2, active.length)} this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total MRR</div>
+        <div class="stat-value">£${totalMRR.toLocaleString()}</div>
+        <div class="stat-change up">▲ Growing</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Services</div>
+        <div class="stat-value">${totalServices}</div>
+        <div class="stat-change neutral">Across all clients</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Churn Risk</div>
+        <div class="stat-value" style="color:var(--green)">0</div>
+        <div class="stat-change neutral">No at-risk clients</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+      <div class="panel">
+        <h3>Revenue by Service</h3>
+        <div class="chart-bars">${chartHtml}</div>
+      </div>
+      <div class="panel">
+        <h3>Recent Activity</h3>
+        <div>${activityHtml}</div>
+      </div>
+    </div>
+  `;
 }
 
 // ===== RENDER SERVICE PAGE =====
@@ -2066,8 +2062,10 @@ function renderClients() {
 
 function filterClients(status, btn) {
   currentFilter = status;
-  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn && btn.parentElement) {
+    btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
   renderClients();
 }
 
