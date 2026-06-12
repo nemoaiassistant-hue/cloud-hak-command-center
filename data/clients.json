@@ -89,7 +89,7 @@
       "services": {
         "websites": true,
         "voice_agents": false,
-        "chatbots": true,
+        "chatbots": false,
         "seo": true,
         "aeo": false,
         "ads": false,
@@ -97,7 +97,7 @@
         "crm": true
       },
       "status": "active",
-      "mrr": 1397,
+      "mrr": 1097,
       "since": "Oct 2025",
       "locId": "pvH5KtdWPkbvSWR49akA"
     },
