@@ -21,7 +21,12 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { action, workflow_id, run_id, message } = req.query.method ? req.query : (req.body || {});
+  // Parse params from query (GET) or body (POST)
+  const body = req.body || {};
+  const action = req.query?.action || body.action;
+  const workflow_id = req.query?.workflow_id || body.workflow_id;
+  const run_id = req.query?.run_id || body.run_id;
+  const message = req.query?.message || body.message;
 
   try {
     const token = await dograhLogin();
