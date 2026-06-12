@@ -1233,6 +1233,14 @@ function renderClientServicePage(viewId) {
   html += `<div class="ws-content active">${tabContent}</div>`;
 
   document.getElementById('view-' + viewId).innerHTML = html;
+
+  // Async data load for CRM
+  if (viewId === 'crm' && c && !crmDataCache) {
+    loadCRMData(c.locId).then(() => {
+      // Re-render after data loads
+      renderClientServicePage(viewId);
+    });
+  }
 }
 
 function switchWsTab(viewId, tab) {
@@ -1248,6 +1256,38 @@ function statCard(label, value, color) {
 // Helper: panel
 function panel(title, content, action) {
   return `<div class="panel" style="margin-bottom:20px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><h3 style="margin:0">${title}</h3>${action||''}</div>${content}</div>`;
+}
+
+// ===== CRM LIVE DATA LOADER =====
+let crmDataCache = null;
+let crmLoading = false;
+
+async function loadCRMData(locId) {
+  if (crmDataCache && crmDataCache[locId]) return crmDataCache[locId];
+  if (crmLoading) return null;
+  crmLoading = true;
+  try {
+    const resp = await fetch('data/crm-data.json');
+    crmDataCache = await resp.json();
+    crmLoading = false;
+    return crmDataCache[locId] || null;
+  } catch(e) {
+    crmLoading = false;
+    console.log('CRM data fetch error:', e);
+    return null;
+  }
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return days + ' days ago';
+  if (days < 30) return Math.floor(days/7) + ' wk ago';
+  return Math.floor(days/30) + ' mo ago';
 }
 
 // ===== WORKSPACE DEFINITIONS FOR EACH SERVICE =====
@@ -1940,89 +1980,123 @@ const SERVICE_WORKSPACE = {
   }
 },
 
-// ─────── 📋 CRM ───────
+// ─────── 📋 CRM (LIVE DATA) ───────
 'crm': {
-  dashboard_count: (c) => '342',
+  dashboard_count: (c) => {
+    const data = crmDataCache && crmDataCache[c.locId];
+    return data ? data.contactCount + ' contacts' : '';
+  },
   dashboard(c) {
+    const data = crmDataCache && crmDataCache[c.locId];
+    if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
+    
+    // Count new this month
+    const now = new Date();
+    const newThisMonth = data.contacts.filter(ct => {
+      const d = new Date(ct.dateAdded);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+
+    // Group by source
+    const sources = {};
+    data.contacts.forEach(ct => {
+      const src = ct.source || 'Direct';
+      sources[src] = (sources[src] || 0) + 1;
+    });
+    const topSources = Object.entries(sources).sort((a,b) => b[1]-a[1]).slice(0,4);
+
     return `
       <div class="stat-grid">
-        ${statCard('Total Contacts', '342')}
-        ${statCard('Pipeline Value', '£48k', 'var(--teal)')}
-        ${statCard('New (30d)', '28')}
-        ${statCard('Conversion Rate', '32%', 'var(--green)')}
+        ${statCard('Total Contacts', data.contactCount)}
+        ${statCard('Pipeline Value', data.pipelineValue > 0 ? '£' + data.pipelineValue.toLocaleString() : '—', 'var(--teal)')}
+        ${statCard('New This Month', newThisMonth)}
+        ${statCard('Opportunities', data.opportunityCount)}
       </div>
-      ${panel('📊 Pipeline Overview', `
-        <div class="pipeline-board">
-          <div class="pipeline-col"><div class="pipeline-col-header">New Leads <span>12</span></div>
-            <div class="pipeline-card"><div class="pc-name">Sarah Jenkins</div><div class="pc-value">£500</div></div>
-            <div class="pipeline-card"><div class="pc-name">Tom Wright</div><div class="pc-value">£800</div></div>
-            <div class="pipeline-card"><div class="pc-name">Aisha Khan</div><div class="pc-value">£300</div></div>
-          </div>
-          <div class="pipeline-col"><div class="pipeline-col-header">Contacted <span>8</span></div>
-            <div class="pipeline-card"><div class="pc-name">Mike Chen</div><div class="pc-value">£1,200</div></div>
-            <div class="pipeline-card"><div class="pc-name">Linda Park</div><div class="pc-value">£600</div></div>
-          </div>
-          <div class="pipeline-col"><div class="pipeline-col-header">Consultation <span>5</span></div>
-            <div class="pipeline-card"><div class="pc-name">Emma Wilson</div><div class="pc-value">£2,500</div></div>
-            <div class="pipeline-card"><div class="pc-name">David Brown</div><div class="pc-value">£1,800</div></div>
-          </div>
-          <div class="pipeline-col"><div class="pipeline-col-header">Won <span>3</span></div>
-            <div class="pipeline-card"><div class="pc-name">James Lee</div><div class="pc-value">£3,200</div></div>
-            <div class="pipeline-card"><div class="pc-name">Rachel Green</div><div class="pc-value">£1,500</div></div>
-          </div>
-        </div>
-      `)}
-    `;
-  },
-  manage(c) {
-    return `
       ${panel('📋 Recent Contacts', `
         <table style="width:100%;font-size:13px">
-          <thead><tr><th style="text-align:left;padding:8px 0">Name</th><th>Status</th><th>Value</th><th>Last Contact</th></tr></thead>
+          <thead><tr><th style="text-align:left;padding:8px 0">Name</th><th>Email</th><th>Added</th></tr></thead>
           <tbody>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Sarah Jenkins</td><td><span class="status-pill status-onboarding">New</span></td><td class="revenue">£500</td><td style="color:var(--gray);font-size:12px">Today</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Mike Chen</td><td><span class="status-pill" style="background:var(--teal);color:#fff">Contacted</span></td><td class="revenue">£1,200</td><td style="color:var(--gray);font-size:12px">Yesterday</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">Emma Wilson</td><td><span class="status-pill status-active">Consultation</span></td><td class="revenue">£2,500</td><td style="color:var(--gray);font-size:12px">2 days ago</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0">James Lee</td><td><span class="status-pill status-active">Won ✅</span></td><td class="revenue">£3,200</td><td style="color:var(--gray);font-size:12px">3 days ago</td></tr>
+            ${data.contacts.slice(0,8).map(ct => `
+              <tr style="border-top:1px solid var(--border)">
+                <td style="padding:8px 0">${ct.name}</td>
+                <td style="font-size:12px;color:var(--gray)">${ct.email || '—'}</td>
+                <td style="color:var(--gray);font-size:12px">${timeAgo(ct.dateAdded)}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       `)}
-      ${panel('📞 Follow-Up Queue', `
+      ${topSources.length > 0 ? panel('📊 Lead Sources', `
         <div style="display:grid;gap:8px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(239,68,68,0.08);border-radius:8px;border-left:3px solid #ef4444"><span>Mike Chen</span><span style="color:#ef4444;font-size:12px">Overdue — 2 days</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(239,68,68,0.08);border-radius:8px;border-left:3px solid #ef4444"><span>Aisha Khan</span><span style="color:#ef4444;font-size:12px">Overdue — 1 day</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px;border-left:3px solid var(--gold)"><span>Tom Wright</span><span style="color:var(--gold);font-size:12px">Due today</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px;border-left:3px solid var(--teal)"><span>Linda Park</span><span style="color:var(--teal);font-size:12px">Due tomorrow</span></div>
+          ${topSources.map(([src, count]) => {
+            const pct = Math.round(count / data.contactCount * 100);
+            return `<div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>${src}</span><span style="color:var(--gray)">${count} (${pct}%)</span></div>`;
+          }).join('')}
         </div>
+      `) : ''}
+    `;
+  },
+  manage(c) {
+    const data = crmDataCache && crmDataCache[c.locId];
+    if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
+    
+    return `
+      ${panel('📋 All Contacts (' + data.contactCount + ')', `
+        <table style="width:100%;font-size:13px">
+          <thead><tr><th style="text-align:left;padding:8px 0">Name</th><th>Email</th><th>Phone</th><th>Added</th></tr></thead>
+          <tbody>
+            ${data.contacts.map(ct => `
+              <tr style="border-top:1px solid var(--border)">
+                <td style="padding:8px 0">${ct.name}</td>
+                <td style="font-size:12px;color:var(--gray)">${ct.email || '—'}</td>
+                <td style="font-size:12px;color:var(--gray)">${ct.phone || '—'}</td>
+                <td style="color:var(--gray);font-size:12px">${timeAgo(ct.dateAdded)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       `)}
     `;
   },
   activity(c) {
-    return panel('📈 Recent Activity', `
+    const data = crmDataCache && crmDataCache[c.locId];
+    if (!data) return `<div class="panel"><h3>⏳ Loading CRM data...</h3></div>`;
+    
+    return panel('📈 Recent Contacts (by date added)', `
       <div style="display:grid;gap:8px;font-size:13px">
-        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>🆕 New lead: Sarah Jenkins (Website form)</span><span style="font-size:11px;color:var(--gray)">2:45 PM</span></div>
-        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>✅ Deal won: James Lee (£3,200)</span><span style="font-size:11px;color:var(--gray)">1:30 PM</span></div>
-        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📞 Call logged: Mike Chen (4 min)</span><span style="font-size:11px;color:var(--gray)">11:00 AM</span></div>
-        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px"><span>📧 Email opened: Emma Wilson</span><span style="font-size:11px;color:var(--gray)">9:15 AM</span></div>
+        ${data.contacts.slice(0,12).map(ct => `
+          <div style="display:flex;justify-content:space-between;padding:10px;background:var(--light-gray);border-radius:8px">
+            <span>🆕 ${ct.name}${ct.email ? ' (' + ct.email + ')' : ''}</span>
+            <span style="font-size:11px;color:var(--gray)">${timeAgo(ct.dateAdded)}</span>
+          </div>
+        `).join('')}
       </div>
     `);
   },
   config(c) {
+    const data = crmDataCache && crmDataCache[c.locId];
+    const count = data ? data.contactCount : 0;
+    const lastUpdate = data ? data.contacts[0]?.dateAdded?.split('T')[0] : '—';
+    
     return `
-      ${panel('📋 Pipeline Stages', `
-        <div style="display:grid;gap:8px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>1️⃣ New Lead</span><span style="color:var(--gray)">12 contacts</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>2️⃣ Contacted</span><span style="color:var(--gray)">8 contacts</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>3️⃣ Consultation Booked</span><span style="color:var(--gray)">5 contacts</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>4️⃣ Won</span><span style="color:var(--green)">3 contacts</span></div>
+      ${panel('🔌 Data Source', `
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Source</span><span>GoHighLevel CRM API</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Location</span><span>${c.name}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Location ID</span><span style="font-size:11px;font-family:monospace">${c.locId}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Contacts synced</span><span>${count}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Last refresh</span><span>${lastUpdate}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);padding-top:12px"><span style="color:var(--gray)">Pipeline Stages</span><span>Not configured in GHL</span></div>
         </div>
       `)}
-      ${panel('🏷️ Lead Sources', `
-        <div style="display:grid;gap:8px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>🌐 Website Form</span><span style="color:var(--gray)">42%</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>📞 Phone (AI Agent)</span><span style="color:var(--gray)">28%</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>💬 Chatbot</span><span style="color:var(--gray)">18%</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px;background:var(--light-gray);border-radius:8px"><span>📣 Google Ads</span><span style="color:var(--gray)">12%</span></div>
+      ${panel('💡 Setup Pipeline', `
+        <div style="font-size:13px;color:var(--gray);line-height:1.6">
+          To enable deal tracking, create a pipeline in GoHighLevel for this location:
+          <ol style="margin:8px 0 0 20px;color:var(--text)">
+            <li>Go to GHL → Opportunities → Pipelines</li>
+            <li>Create stages (e.g. New Lead → Contacted → Won)</li>
+            <li>Re-run fetch_crm.py to sync</li>
+          </ol>
         </div>
       `)}
     `;
