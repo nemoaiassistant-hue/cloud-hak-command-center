@@ -168,6 +168,54 @@ tr:hover{background:var(--border)}
 .empty-state .empty-icon{font-size:48px;margin-bottom:12px;opacity:0.3}
 .empty-state h3{font-size:16px;color:#999;margin-bottom:4px}
 
+/* ===== CLIENT SELECTOR ===== */
+.client-selector{
+  position:relative;
+}
+.client-selector-btn{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  background:var(--light-gray);border:1px solid var(--border);border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:600;color:var(--text);
+  font-family:inherit;transition:all 0.15s;min-width:200px;
+}
+.client-selector-btn:hover{border-color:var(--teal)}
+.client-selector-btn .chevron{margin-left:auto;font-size:10px;color:var(--gray);transition:transform 0.2s}
+.client-selector.open .chevron{transform:rotate(180deg)}
+.client-selector-dropdown{
+  display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--dark);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);z-index:200;max-height:320px;overflow-y:auto;
+}
+.client-selector.open .client-selector-dropdown{display:block}
+.client-option{
+  padding:10px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;
+  transition:background 0.1s;border-bottom:1px solid var(--border);
+}
+.client-option:last-child{border-bottom:none}
+.client-option:hover{background:var(--border)}
+.client-option.selected{background:rgba(59,182,179,0.08);color:var(--teal)}
+.client-option.all-clients{font-weight:700;color:var(--gold);border-bottom:2px solid var(--border)}
+.client-option .opt-sub{font-size:11px;color:var(--gray);margin-left:auto}
+.client-option .opt-icon{font-size:16px}
+
+/* Client context bar */
+.client-context-bar{
+  display:none;align-items:center;gap:12px;padding:12px 20px;
+  background:rgba(59,182,179,0.06);border:1px solid rgba(59,182,179,0.15);
+  border-radius:var(--radius);margin-bottom:20px;
+}
+.client-context-bar.show{display:flex}
+.client-context-bar .ctx-name{font-weight:700;font-size:15px}
+.client-context-bar .ctx-sub{font-size:12px;color:var(--gray)}
+.client-context-bar .ctx-clear{
+  margin-left:auto;padding:6px 14px;background:var(--teal);color:#fff;
+  border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:inherit;
+}
+
+/* Nav hidden state */
+.nav-item.service-disabled{display:none}
+
 /* ===== MOBILE ===== */
 .mobile-header{display:none;padding:12px 16px;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--dark)}
 .menu-toggle{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px}
@@ -180,12 +228,16 @@ tr:hover{background:var(--border)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay.show{display:block}
   .mobile-header{display:flex}
+  #mobile-selector-wrap{display:block !important}
   .topbar{display:none}
+  .client-selector{display:none}
   .content{padding:16px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .stat-card .stat-value{font-size:22px}
   .topbar .search{width:auto;flex:1}
-  th:nth-child(3),td:nth-child(3){display:none} /* hide some columns on mobile */
+  th:nth-child(3),td:nth-child(3){display:none}
+  .client-context-bar{flex-wrap:wrap}
+  .client-context-bar .ctx-clear{width:100%;text-align:center}
 }
 </style>
 </head>
@@ -268,12 +320,28 @@ tr:hover{background:var(--border)}
     <span class="brand-logo">CLOUD HAK</span>
     <div class="icon-btn" id="themeToggleMobile" title="Toggle theme" onclick="toggleTheme()" style="margin-left:auto;width:32px;height:32px;font-size:14px">🌙</div>
   </div>
+  <!-- Mobile client selector (below header) -->
+  <div style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--dark)" id="mobile-selector-wrap">
+    <button class="client-selector-btn" style="width:100%" onclick="toggleClientSelector()">
+      <span style="font-size:16px">🏢</span>
+      <span id="selector-label-mobile">All Clients</span>
+      <span class="chevron">▼</span>
+    </button>
+  </div>
 
   <!-- Desktop topbar -->
   <div class="topbar">
     <div>
       <div class="breadcrumb" id="breadcrumb">Cloud Hak / Overview</div>
       <h1 id="page-title">Overview</h1>
+    </div>
+    <div class="client-selector" id="clientSelector" style="margin-left:24px">
+      <button class="client-selector-btn" onclick="toggleClientSelector()">
+        <span style="font-size:16px">🏢</span>
+        <span id="selector-label">All Clients</span>
+        <span class="chevron">▼</span>
+      </button>
+      <div class="client-selector-dropdown" id="selector-dropdown"></div>
     </div>
     <div class="topbar-actions">
       <input type="text" class="search" placeholder="Search clients..." id="globalSearch" oninput="handleSearch(this.value)">
@@ -285,6 +353,16 @@ tr:hover{background:var(--border)}
 
   <!-- ===== CONTENT VIEWS ===== -->
   <div class="content">
+
+    <!-- Client context bar (shows when a client is selected) -->
+    <div class="client-context-bar" id="context-bar">
+      <span style="font-size:24px" id="ctx-icon">🏢</span>
+      <div>
+        <div class="ctx-name" id="ctx-name">—</div>
+        <div class="ctx-sub" id="ctx-sub">—</div>
+      </div>
+      <button class="ctx-clear" onclick="clearClientSelection()">← All Clients</button>
+    </div>
 
     <!-- ===== OVERVIEW ===== -->
     <div class="view active" id="view-overview">
@@ -453,8 +531,10 @@ function toggleTheme() {
 
 // ===== STATE =====
 let allClients = [];
+let selectedClient = null; // null = agency view, object = client selected
 let currentFilter = 'all';
 let currentSearch = '';
+let currentView = 'overview';
 
 // ===== DEMO DATA (replaced by GHL API when connected) =====
 const DEMO_CLIENTS = [
@@ -485,22 +565,125 @@ const ACTIVITY = [
   { icon:'⏸️', bg:'rgba(249,115,22,0.12)', text:'<b>Eastbourne Legal</b> paused Voice AI', time:'3 days ago' },
 ];
 
+// ===== CLIENT SELECTOR =====
+function toggleClientSelector() {
+  document.getElementById('clientSelector').classList.toggle('open');
+}
+
+function populateClientSelector() {
+  const dropdown = document.getElementById('selector-dropdown');
+  let html = `<div class="client-option all-clients ${!selectedClient?'selected':''}" onclick="selectClient(null)">
+    <span class="opt-icon">🏢</span> All Clients
+    <span class="opt-sub">${allClients.length} accounts</span>
+  </div>`;
+  allClients.forEach(c => {
+    const isSel = selectedClient && selectedClient.locId === c.locId;
+    const svcCount = Object.values(c.services).filter(Boolean).length;
+    html += `<div class="client-option ${isSel?'selected':''}" onclick="selectClient('${c.locId}')">
+      <span class="opt-icon">${c.status==='active'?'✅':'⏸️'}</span>
+      ${c.name}
+      <span class="opt-sub">${svcCount} services · £${c.mrr}/mo</span>
+    </div>`;
+  });
+  dropdown.innerHTML = html;
+}
+
+function selectClient(locId) {
+  if (locId === null) {
+    selectedClient = null;
+  } else {
+    selectedClient = allClients.find(c => c.locId === locId);
+  }
+  document.getElementById('clientSelector').classList.remove('open');
+  updateSelectorLabel();
+  updateSidebar();
+  updateContextBar();
+  // Switch to overview when selecting a client
+  switchView('overview');
+}
+
+function clearClientSelection() {
+  selectClient(null);
+}
+
+function updateSelectorLabel() {
+  const label = selectedClient ? selectedClient.name : 'All Clients';
+  document.getElementById('selector-label').textContent = label;
+  const mLabel = document.getElementById('selector-label-mobile');
+  if (mLabel) mLabel.textContent = label;
+}
+
+function updateContextBar() {
+  const bar = document.getElementById('context-bar');
+  if (selectedClient) {
+    bar.classList.add('show');
+    document.getElementById('ctx-name').textContent = selectedClient.name;
+    const svcCount = Object.values(selectedClient.services).filter(Boolean).length;
+    document.getElementById('ctx-sub').textContent = `${selectedClient.sub} · ${svcCount} services · £${selectedClient.mrr}/mo`;
+    document.getElementById('ctx-icon').textContent = selectedClient.status === 'active' ? '✅' : '⏸️';
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function updateSidebar() {
+  // If a client is selected, hide services they don't have
+  Object.keys(SERVICE_CONFIG).forEach(key => {
+    const navItem = document.querySelector(`.nav-item[data-view="${key}"]`);
+    if (!navItem) return;
+    if (selectedClient) {
+      const field = SERVICE_CONFIG[key].field;
+      if (selectedClient.services[field]) {
+        navItem.classList.remove('service-disabled');
+      } else {
+        navItem.classList.add('service-disabled');
+      }
+    } else {
+      navItem.classList.remove('service-disabled');
+    }
+  });
+}
+
+// Close selector when clicking outside (delayed to allow option clicks)
+document.addEventListener('click', (e) => {
+  setTimeout(() => {
+    const sel = document.getElementById('clientSelector');
+    if (sel && !sel.contains(e.target)) sel.classList.remove('open');
+  }, 150);
+});
+
 // ===== VIEW SWITCHING =====
 function switchView(viewId) {
+  currentView = viewId;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   
-  document.getElementById('view-' + viewId).classList.add('active');
-  document.querySelector(`.nav-item[data-view="${viewId}"]`).classList.add('active');
+  const view = document.getElementById('view-' + viewId);
+  if (view) view.classList.add('active');
+  const navItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+  if (navItem) navItem.classList.add('active');
 
   const config = SERVICE_CONFIG[viewId];
   if (config) {
-    renderServicePage(viewId);
-    document.getElementById('breadcrumb').textContent = `Cloud Hak / Services / ${config.name}`;
-    document.getElementById('page-title').textContent = `${config.icon} ${config.name}`;
+    if (selectedClient) {
+      renderClientServicePage(viewId);
+      document.getElementById('breadcrumb').textContent = `${selectedClient.name} / ${config.name}`;
+      document.getElementById('page-title').textContent = `${config.icon} ${config.name}`;
+    } else {
+      renderServicePage(viewId);
+      document.getElementById('breadcrumb').textContent = `Cloud Hak / Services / ${config.name}`;
+      document.getElementById('page-title').textContent = `${config.icon} ${config.name}`;
+    }
   } else if (viewId === 'overview') {
-    document.getElementById('breadcrumb').textContent = 'Cloud Hak / Overview';
-    document.getElementById('page-title').textContent = 'Overview';
+    if (selectedClient) {
+      renderClientOverview();
+      document.getElementById('breadcrumb').textContent = `${selectedClient.name} / Dashboard`;
+      document.getElementById('page-title').textContent = selectedClient.name;
+    } else {
+      renderOverview();
+      document.getElementById('breadcrumb').textContent = 'Cloud Hak / Overview';
+      document.getElementById('page-title').textContent = 'Overview';
+    }
   } else {
     const titles = { clients:'Clients', reports:'Reports', settings:'Settings' };
     document.getElementById('breadcrumb').textContent = `Cloud Hak / ${titles[viewId] || viewId}`;
@@ -635,6 +818,136 @@ function filterServiceTable(btn, status) {
   // This is handled inline for demo; full implementation would re-query
 }
 
+// ===== RENDER CLIENT OVERVIEW (when a specific client is selected) =====
+function renderClientOverview() {
+  const c = selectedClient;
+  const activeServices = Object.entries(c.services).filter(([k,v]) => v).map(([k]) => {
+    const sc = Object.values(SERVICE_CONFIG).find(s => s.field === k);
+    return sc;
+  });
+  const totalMonthly = activeServices.reduce((s,sc) => s + sc.price, 0);
+  const ov = document.getElementById('view-overview');
+
+  ov.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" style="font-size:18px;text-transform:capitalize;color:var(--${c.status==='active'?'green':c.status==='onboarding'?'gold':'orange'})">${c.status}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Revenue</div>
+        <div class="stat-value" style="color:var(--teal)">£${c.mrr}/mo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Services</div>
+        <div class="stat-value">${activeServices.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Client Since</div>
+        <div class="stat-value" style="font-size:18px">${c.since}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+      <div class="panel">
+        <h3>📋 Subscribed Services</h3>
+        <div style="display:grid;gap:10px">
+          ${activeServices.map(sc => `
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--light-gray);border-radius:8px;cursor:pointer"
+                 onclick="switchView('${Object.keys(SERVICE_CONFIG).find(k=>SERVICE_CONFIG[k].field===sc.field)}')">
+              <span style="font-size:20px">${sc.icon}</span>
+              <div>
+                <div style="font-weight:600;font-size:14px">${sc.name}</div>
+                <div style="font-size:12px;color:var(--gray)">£${sc.price}/mo · Click to manage</div>
+              </div>
+              <span style="margin-left:auto" class="status-pill status-active">Active</span>
+            </div>
+          `).join('') || '<div style="color:var(--gray);padding:20px">No active services</div>'}
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📍 Account Info</h3>
+        <div style="display:grid;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Type</span><span>${c.sub}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">Location ID</span><span style="font-family:monospace;font-size:11px">${c.locId}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--gray)">MRR</span><span class="revenue">£${c.mrr}/mo</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0">
+            <span style="color:var(--gray)">Lifetime Value</span><span class="revenue">£${(c.mrr * 6).toLocaleString()}*</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== RENDER CLIENT SERVICE PAGE (when a specific client is selected) =====
+function renderClientServicePage(viewId) {
+  const config = SERVICE_CONFIG[viewId];
+  const c = selectedClient;
+  const otherServices = Object.entries(c.services).filter(([k,v]) => v && k !== config.field)
+    .map(([k]) => {
+      const sc = Object.values(SERVICE_CONFIG).find(s => s.field === k);
+      return sc ? `<span style="font-size:16px" title="${sc.name}">${sc.icon}</span>` : '';
+    }).join(' ');
+
+  const html = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Service Status</div>
+        <div class="stat-value" style="font-size:18px;color:var(--green)">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Cost</div>
+        <div class="stat-value" style="color:var(--teal)">£${config.price}/mo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Client Since</div>
+        <div class="stat-value" style="font-size:18px">${c.since}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Other Services</div>
+        <div class="stat-value" style="font-size:18px">${otherServices || '<span style="color:var(--gray);font-size:13px">None</span>'}</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>${config.icon} ${config.name} — ${c.name}</h3>
+      <div style="display:grid;gap:12px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--gray)">Service Type</span><span style="font-weight:600">${config.name}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--gray)">Status</span><span class="status-pill status-${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--gray)">Monthly Fee</span><span class="revenue">£${config.price}/mo</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--gray)">GHL Location</span><span style="font-family:monospace;font-size:11px">${c.locId}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0">
+          <span style="color:var(--gray)">Contract Started</span><span>${c.since}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>⚙️ Quick Actions</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Opens service config')">🔧 Configure</button>
+        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Opens GHL location')">🔗 Open in GHL</button>
+        <button class="filter-btn" style="padding:8px 16px" onclick="alert('Downloads report')">📄 Export Report</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('view-' + viewId).innerHTML = html;
+}
 // ===== RENDER CLIENTS =====
 function renderClients() {
   let clients = allClients;
@@ -654,7 +967,7 @@ function renderClients() {
       const on = c.services[cfg.field];
       return `<span class="svc-badge ${on?'on':''}" title="${cfg.name}">${cfg.icon}</span>`;
     }).join('');
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="selectClient('${c.locId}')" title="Click to view ${c.name}">
       <td><div class="client-name">${c.name}</div><div class="client-sub">${c.sub}</div></td>
       <td><div class="service-badges">${badges}</div></td>
       <td><span class="status-pill status-${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
@@ -739,6 +1052,7 @@ function toggleSidebar() {
 // ===== INIT =====
 function init() {
   allClients = DEMO_CLIENTS;
+  populateClientSelector();
   renderOverview();
   renderClients();
   renderReports();
