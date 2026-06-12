@@ -6,7 +6,7 @@ const GH_REPO = 'cloud-hak-command-center';
 const GH_PATH = 'data/clients.json';
 const GH_BRANCH = 'main';
 
-const ZAI_URL = 'https://api.z.ai/api/paas/v4/chat/completions';
+const ZAI_URL = 'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
 
 // ---- GitHub helpers (same as config.js) ----
 async function getFromGitHub(token) {
