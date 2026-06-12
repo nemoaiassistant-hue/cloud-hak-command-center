@@ -148,6 +148,59 @@ async function executeFunction(name, args, ghToken, config) {
     };
   }
 
+  if (name === 'get_voice_status') {
+    // Fetch live data from Dograh
+    const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
+    const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
+    try {
+      const loginResp = await fetch(`${DOGRAH_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'nima@cloud-hak.com', password: DOGRAH_PASS }),
+      });
+      if (!loginResp.ok) throw new Error('Dograh login failed');
+      const { token } = await loginResp.json();
+
+      const wfResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const workflows = await wfResp.json();
+
+      // Get runs for each workflow
+      const agents = await Promise.all(workflows.map(async (wf) => {
+        try {
+          const runsResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/${wf.id}/runs`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const runsData = await runsResp.json();
+          const runs = runsData.runs || [];
+          const totalSecs = runs.reduce((s, r) => s + ((r.cost_info || {}).call_duration_seconds || 0), 0);
+          // Find which client this belongs to
+          const client = data.clients.find(c => c.dograhAgentId === wf.id);
+          return {
+            id: wf.id,
+            name: wf.name,
+            status: wf.status || 'active',
+            client: client ? client.name : 'Unmapped',
+            sessions: runs.length,
+            minutes: Math.round(totalSecs / 60 * 10) / 10,
+            lastSession: runs.length > 0 ? runs[runs.length - 1].created_at : 'never',
+          };
+        } catch (e) {
+          return { id: wf.id, name: wf.name, status: 'error', client: 'Unknown', sessions: 0, minutes: 0, lastSession: 'never' };
+        }
+      }));
+
+      return {
+        total_agents: agents.length,
+        active_agents: agents.filter(a => a.status === 'active').length,
+        agents,
+      };
+    } catch (e) {
+      return { error: `Could not reach Dograh: ${e.message}. The server may be offline.` };
+    }
+  }
+
   return { error: `Unknown function: ${name}` };
 }
 
@@ -208,6 +261,14 @@ const TOOLS = [
       parameters: { type: 'object', properties: {} },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'get_voice_status',
+      description: 'Check the status of AI voice agents running on Dograh — agent names, session counts, minutes used, last activity. Use when asked about voice agents, calls, or if agents are online.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
 ];
 
 const SYSTEM_PROMPT = `You are the Cloud Hak Command Center AI assistant. You help manage clients, services, and pricing for Cloud Hak (a private AI agency).
@@ -217,6 +278,7 @@ You can:
 - Set custom pricing or discounts
 - Look up client details and MRR
 - Give agency-wide overviews
+- Check the status of AI voice agents (Dograh platform)
 
 Be concise and direct. When you execute an action, confirm what changed in one sentence. Use £ for all prices. You are speaking to Nima, the owner of Cloud Hak.`;
 

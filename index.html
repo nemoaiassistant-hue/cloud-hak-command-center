@@ -1438,6 +1438,13 @@ function renderClientServicePage(viewId) {
       renderClientServicePage(viewId);
     });
   }
+
+  // Async data load for Voice Agents (Dograh)
+  if (viewId === 'voice-agents' && c && c.dograhAgentId && !voiceDataCache[c.dograhAgentId] && !voiceLoading) {
+    loadVoiceData().then(() => {
+      renderClientServicePage(viewId);
+    });
+  }
 }
 
 function switchWsTab(viewId, tab) {
@@ -1459,6 +1466,29 @@ function panel(title, content, action) {
 // ===== CRM LIVE DATA LOADER =====
 let crmDataCache = {};
 let crmLoading = {};
+
+// ===== VOICE AGENTS LIVE DATA (Dograh) =====
+let voiceDataCache = {};
+let voiceLoading = false;
+
+async function loadVoiceData() {
+  if (voiceLoading) return;
+  voiceLoading = true;
+  try {
+    const resp = await fetch('/api/voice');
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    const data = await resp.json();
+    if (data.status === 'live' && data.agents) {
+      data.agents.forEach(agent => {
+        voiceDataCache[agent.id] = agent;
+      });
+    }
+  } catch (e) {
+    console.error('Voice data load failed:', e);
+  } finally {
+    voiceLoading = false;
+  }
+}
 
 async function loadCRMData(locId) {
   if (crmDataCache[locId]) return crmDataCache[locId];
@@ -1493,154 +1523,135 @@ function timeAgo(dateStr) {
 // ===== WORKSPACE DEFINITIONS FOR EACH SERVICE =====
 const SERVICE_WORKSPACE = {
 
-// ─────── 🎙️ VOICE AGENTS ───────
+// ─────── 🎙️ VOICE AGENTS (LIVE — powered by Dograh) ───────
 'voice-agents': {
-  dashboard_count: (c) => '24 calls',
+  dashboard_count: (c) => {
+    const d = voiceDataCache[c.dograhAgentId || -1];
+    return d ? `${d.stats.totalSessions} sessions` : '—';
+  },
   dashboard(c) {
+    const d = voiceDataCache[c.dograhAgentId || -1];
+    if (!d) return `<div class="panel" style="text-align:center;padding:40px;color:var(--gray)">⏳ Loading agent data from Dograh...</div>`;
+    const mins = Math.round(d.stats.totalSeconds / 60 * 10) / 10;
+    const lastDate = d.stats.lastSession ? new Date(d.stats.lastSession).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : 'Never';
     return `
       <div class="stat-grid">
-        ${statCard('Calls Today', '8')}
-        ${statCard('This Week', '24', 'var(--teal)')}
-        ${statCard('Avg Duration', '3:42')}
-        ${statCard('Booking Rate', '68%', 'var(--green)')}
+        ${statCard('Total Sessions', d.stats.totalSessions)}
+        ${statCard('Voice Calls', d.stats.voiceCalls, 'var(--teal)')}
+        ${statCard('Text Chats', d.stats.textChats, 'var(--gold)')}
+        ${statCard('Total Minutes', mins + 'm', 'var(--green)')}
       </div>
       ${panel('📋 Agent Status', `
         <div style="display:grid;gap:10px;font-size:13px">
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Agent Name</span><span style="font-weight:600">Sam (AI Receptionist)</span>
+            <span style="color:var(--gray)">Agent Name</span><span style="font-weight:600">${d.name}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Phone Number</span><span style="font-family:monospace">+44 1273 000 123</span>
+            <span style="color:var(--gray)">Dograh Workflow ID</span><span style="font-family:monospace">#${d.id}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Status</span><span class="status-pill status-active">● Online</span>
+            <span style="color:var(--gray)">Status</span><span class="status-pill status-active">● ${d.status === 'active' ? 'Online' : 'Offline'}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Hours</span><span>Mon–Fri 9:00–17:00</span>
+            <span style="color:var(--gray)">Last Session</span><span>${lastDate}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0">
-            <span style="color:var(--gray)">After Hours</span><span>Voicemail + SMS callback</span>
+            <span style="color:var(--gray)">Platform</span><span>🐶 Dograh OSS (Self-Hosted)</span>
           </div>
         </div>
       `)}
-      ${panel('📊 Call Distribution', `
+      ${panel('📊 Session Distribution', `
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
-            <div style="font-size:28px;font-weight:800;color:var(--green)">17</div><div style="font-size:11px;color:var(--gray)">Answered</div>
+            <div style="font-size:28px;font-weight:800;color:var(--teal)">${d.stats.voiceCalls}</div><div style="font-size:11px;color:var(--gray)">Voice / WebRTC</div>
           </div>
           <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
-            <div style="font-size:28px;font-weight:800;color:#ef4444">5</div><div style="font-size:11px;color:var(--gray)">Missed</div>
+            <div style="font-size:28px;font-weight:800;color:var(--gold)">${d.stats.textChats}</div><div style="font-size:11px;color:var(--gray)">Text Chats</div>
           </div>
           <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
-            <div style="font-size:28px;font-weight:800;color:var(--teal)">2</div><div style="font-size:11px;color:var(--gray)">Transferred</div>
+            <div style="font-size:28px;font-weight:800;color:var(--green)">${mins}m</div><div style="font-size:11px;color:var(--gray)">Total Talk Time</div>
           </div>
           <div style="flex:1;min-width:120px;text-align:center;padding:16px;background:var(--light-gray);border-radius:10px">
-            <div style="font-size:28px;font-weight:800;color:var(--gold)">11</div><div style="font-size:11px;color:var(--gray)">Booked</div>
+            <div style="font-size:28px;font-weight:800;color:var(--purple,#8b5cf6)">£0</div><div style="font-size:11px;color:var(--gray)">Platform Cost</div>
           </div>
         </div>
       `)}
     `;
   },
-  activity_count: (c) => '24',
+  activity_count: (c) => {
+    const d = voiceDataCache[c.dograhAgentId || -1];
+    return d ? String(d.recentSessions.length) : '0';
+  },
   activity(c) {
-    const calls = [
-      {type:'📥',name:'Sarah Jenkins',status:'inbound',dur:'4:12',time:'2:34 PM',note:'Booked consultation — Thu 3pm'},
-      {type:'📥',name:'Unknown',status:'missed',dur:'0:00',time:'1:50 PM',note:'Missed call — SMS sent'},
-      {type:'📤',name:'Mike Chen',status:'outbound',dur:'2:45',time:'12:30 PM',note:'Follow-up callback'},
-      {type:'📥',name:'Emma Wilson',status:'inbound',dur:'5:30',time:'11:15 AM',note:'Asked about pricing, sent info'},
-      {type:'📥',name:'David Brown',status:'inbound',dur:'3:20',time:'10:05 AM',note:'Booked consultation — Fri 10am'},
-      {type:'📥',name:'Lisa Park',status:'inbound',dur:'4:55',time:'9:30 AM',note:'Transferred to reception'},
-    ];
-    return panel('📞 Recent Calls', calls.map(call => `
+    const d = voiceDataCache[c.dograhAgentId || -1];
+    if (!d || !d.recentSessions.length) return `<div class="panel" style="text-align:center;padding:40px;color:var(--gray)">No sessions yet</div>`;
+    return panel('📞 Recent Sessions', d.recentSessions.map(s => {
+      const icon = s.mode === 'textchat' ? '💬' : '🎙️';
+      const dur = s.duration > 0 ? `${s.duration}s` : '—';
+      const date = new Date(s.created).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const modeLabel = s.mode === 'textchat' ? 'text chat' : 'voice';
+      return `
       <div class="call-entry">
-        <span class="call-type">${call.type}</span>
+        <span class="call-type">${icon}</span>
         <div style="flex:1">
-          <div style="font-weight:600;font-size:13px">${call.name} <span class="call-status-${call.status}">${call.status}</span></div>
-          <div style="font-size:12px;color:var(--gray)">${call.note}</div>
+          <div style="font-weight:600;font-size:13px">${s.name} <span class="call-status-inbound">${modeLabel}</span></div>
+          <div style="font-size:12px;color:var(--gray)">Dograh Run #${s.id} · ${s.completed ? 'completed' : 'in progress'}</div>
         </div>
-        <span class="call-duration">${call.dur}</span>
-        <span style="font-size:11px;color:var(--gray)">${call.time}</span>
-      </div>
-    `).join(''), `<button class="filter-btn" style="padding:6px 14px" onclick="alert('Exports call log CSV')">📄 Export</button>`);
+        <span class="call-duration">${dur}</span>
+        <span style="font-size:11px;color:var(--gray)">${date}</span>
+      </div>`;
+    }).join(''));
   },
   manage(c) {
+    const d = voiceDataCache[c.dograhAgentId || -1];
+    const agentName = d ? d.name : 'No agent mapped';
+    const agentId = c.dograhAgentId ? `#${c.dograhAgentId}` : 'Not mapped';
     return `
-      ${panel('🎙️ Agent Configuration', `
+      ${panel('🎙️ Agent Details', `
         <div style="display:grid;gap:14px;font-size:13px">
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Agent Name</span>
-            <input class="form-input" style="width:200px" value="Sam (AI Receptionist)">
+            <span style="color:var(--gray)">Agent Name</span><span style="font-weight:600">${agentName}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Voice Model</span>
-            <select class="form-input" style="width:200px"><option>Professional Female (UK)</option><option>Friendly Male (UK)</option><option>Professional Male (US)</option></select>
+            <span style="color:var(--gray)">Dograh Workflow ID</span><span style="font-family:monospace">${agentId}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Speaking Speed</span>
-            <input type="range" min="80" max="120" value="100" style="width:200px">
+            <span style="color:var(--gray)">LLM Provider</span><span>Ollama (Qwen2.5 3B)</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Personality</span>
-            <select class="form-input" style="width:200px"><option>Warm & Helpful</option><option>Professional & Concise</option><option>Casual & Friendly</option></select>
+            <span style="color:var(--gray)">TTS Provider</span><span>Dograh Cloud</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--gray)">Interruption Handling</span>
-            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            <span style="color:var(--gray)">STT Provider</span><span>Dograh Cloud</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
-            <span style="color:var(--gray)">Background Noise Filter</span>
-            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            <span style="color:var(--gray)">Hosting</span><span>Self-Hosted (Mac Mini)</span>
           </div>
         </div>
       `)}
-      ${panel('🕘 Business Hours & Routing', `
-        <div style="display:grid;gap:10px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Monday–Friday</span><span>9:00 AM – 5:00 PM</span></div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Saturday</span><span>10:00 AM – 2:00 PM</span></div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Sunday</span><span style="color:#ef4444">Closed</span></div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);padding-top:10px"><span style="color:var(--gray)">After Hours Action</span><span>Voicemail + SMS callback</span></div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Overflow (3+ queue)</span><span>Transfer to mobile</span></div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--gray)">Emergency Keywords</span><span>Transfer immediately</span></div>
-        </div>
-      `)}
-      ${panel('🧪 Test Call', `
-        <div style="display:flex;gap:12px;align-items:center">
-          <button class="filter-btn" style="padding:10px 20px;background:var(--teal);color:#fff" onclick="alert('Initiating test call...')">📞 Place Test Call</button>
-          <span style="font-size:12px;color:var(--gray)">Calls your number to test the agent</span>
-        </div>
+      ${panel('🔗 Manage on Dograh', `
+        <div style="font-size:13px;color:var(--gray);margin-bottom:12px">Edit agent prompts, workflows, and test calls directly on the Dograh platform.</div>
+        <a href="http://localhost:3010" target="_blank" class="filter-btn" style="display:inline-block;padding:10px 20px;background:var(--teal);color:#fff;text-decoration:none">🐶 Open Dograh Builder →</a>
       `)}
     `;
   },
   config(c) {
+    const hasAgent = c.dograhAgentId != null;
     return `
-      ${panel('🔗 Integrations', `
+      ${panel('🔗 Dograh Integration', `
         <div style="display:grid;gap:10px;font-size:13px">
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span>📅 Google Calendar</span><span class="status-pill status-active">Connected</span>
+            <span>🐶 Dograh Workflow ID</span><span style="font-family:monospace">${hasAgent ? '#'+c.dograhAgentId : 'Not mapped'}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span>📋 GHL CRM</span><span class="status-pill status-active">Connected</span>
+            <span>🔌 Connection Status</span><span class="status-pill status-active">${hasAgent ? 'Mapped' : 'Unmapped'}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span>💬 SMS Gateway</span><span class="status-pill status-active">Twilio</span>
+            <span>💻 Platform</span><span>Dograh OSS (Self-Hosted)</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
-            <span>🏥 Practice Management</span><span class="status-pill" style="background:var(--border)">Not Connected</span>
+            <span>💰 Platform Cost</span><span class="status-pill status-active">£0/mo</span>
           </div>
-        </div>
-      `)}
-      ${panel('📚 Knowledge Base', `
-        <div style="display:grid;gap:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
-            <span>📄 Services & Pricing.pdf</span><span style="font-size:11px;color:var(--gray)">Updated 2 days ago</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
-            <span>📄 FAQ.md</span><span style="font-size:11px;color:var(--gray)">Updated 1 week ago</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--light-gray);border-radius:8px">
-            <span>📄 Business Info.txt</span><span style="font-size:11px;color:var(--gray)">Updated 2 weeks ago</span>
-          </div>
-          <button class="filter-btn" style="padding:8px 16px;width:fit-content;margin-top:4px">➕ Upload Document</button>
         </div>
       `)}
       ${panel('⚙️ Advanced Settings', `
