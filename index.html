@@ -1126,9 +1126,9 @@ function renderClientOverview() {
                   <div style="font-size:11px;color:var(--gray)">£${sc.price}/mo</div>
                 </div>
                 <button onclick="handleToggleService('${c.locId}','${sc.field}',${!isOn})"
-                  style="padding:6px 16px;border-radius:20px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;
-                  background:${isOn?'var(--green)':'var(--border)'};color:${isOn?'#fff':'var(--gray)'}">
-                  ${isOn ? '✓ Active' : 'Off'}
+                  style="padding:8px 18px;border-radius:24px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;min-width:90px;
+                  border-color:${isOn?'var(--green)':'var(--gray)'};background:${isOn?'var(--green)':'transparent'};color:${isOn?'#fff':'var(--gray)'}">
+                  ${isOn ? 'ON ✓' : 'Activate'}
                 </button>
               </div>
             `;
