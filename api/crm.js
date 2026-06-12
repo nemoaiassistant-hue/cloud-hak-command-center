@@ -14,10 +14,12 @@ function getLocToken(locId) {
   return tokens[locId] || process.env.GHL_AGENCY_TOKEN;
 }
 
-async function ghlGet(path, locId) {
+async function ghlGet(path, locId, startAfter, startAfterId) {
   const token = getLocToken(locId);
   const sep = path.includes('?') ? '&' : '?';
-  const url = `${GHL_BASE}${path}${sep}locationId=${locId}`;
+  let url = `${GHL_BASE}${path}${sep}locationId=${locId}`;
+  if (startAfter) url += `&startAfter=${startAfter}`;
+  if (startAfterId) url += `&startAfterId=${startAfterId}`;
   
   const resp = await fetch(url, {
     headers: {
@@ -32,6 +34,28 @@ async function ghlGet(path, locId) {
   return resp.json();
 }
 
+// Paginate through ALL contacts (GHL caps at 100/page, uses startAfter/startAfterId)
+async function ghlGetAllContacts(locId) {
+  let allContacts = [];
+  let startAfter = null;
+  let startAfterId = null;
+  let pages = 0;
+  let total = 0;
+  
+  do {
+    const data = await ghlGet('/contacts/?limit=100', locId, startAfter, startAfterId);
+    allContacts = allContacts.concat(data.contacts || []);
+    total = data.meta?.total || allContacts.length;
+    startAfter = data.meta?.startAfter || null;
+    startAfterId = data.meta?.startAfterId || null;
+    pages++;
+    // Stop if no next page
+    if (!data.meta?.nextPageUrl) break;
+  } while (startAfterId && pages < 50); // safety cap at 5000 contacts
+  
+  return { contacts: allContacts, total };
+}
+
 export default async function handler(req, res) {
   try {
     const { locId } = req.query;
@@ -40,16 +64,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'locId required' });
     }
 
-    // Fetch contacts and opportunities in parallel
-    const [contactsResp, oppResp] = await Promise.allSettled([
-      ghlGet('/contacts/?limit=100', locId),
+    // Fetch all contacts (paginated) + opportunities in parallel
+    const [allContactsResp, oppResp] = await Promise.allSettled([
+      ghlGetAllContacts(locId),
       ghlGet('/opportunities/?limit=100', locId),
     ]);
 
-    const contactsData = contactsResp.status === 'fulfilled' ? contactsResp.value : { contacts: [] };
+    const rawContacts = allContactsResp.status === 'fulfilled' ? allContactsResp.value.contacts : [];
+    const totalCount = allContactsResp.status === 'fulfilled' ? allContactsResp.value.total : 0;
     const oppData = oppResp.status === 'fulfilled' ? oppResp.value : { opportunities: [] };
 
-    const contacts = (contactsData.contacts || []).map(ct => ({
+    const contacts = rawContacts.map(ct => ({
       name: `${ct.firstName || ''} ${ct.lastName || ''}`.trim() || ct.name || 'Unknown',
       email: ct.email || '',
       phone: ct.phone || '',
@@ -92,7 +117,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       contacts,
       opportunities,
-      contactCount: contacts.length,
+      contactCount: totalCount,
       opportunityCount: opportunities.length,
       pipelineValue,
       newThisMonth,

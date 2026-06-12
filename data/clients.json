@@ -1,0 +1,61 @@
+{
+  "agency": {
+    "name": "Cloud Hak",
+    "tagline": "Private AI",
+    "email": "info@cloud-hak.com"
+  },
+  "services": [
+    { "id": "websites",     "icon": "🌐", "name": "Web Design",         "price": 497 },
+    { "id": "voice_agents", "icon": "🎙️", "name": "AI Voice Agents",    "price": 500 },
+    { "id": "chatbots",     "icon": "💬", "name": "AI Chatbots",         "price": 300 },
+    { "id": "seo",          "icon": "🔍", "name": "SEO",                 "price": 400 },
+    { "id": "aeo",          "icon": "🤖", "name": "AEO",                 "price": 350 },
+    { "id": "ads",          "icon": "📣", "name": "Google & Social Ads", "price": 400 },
+    { "id": "automation",   "icon": "⚙️", "name": "Automation",          "price": 300 },
+    { "id": "crm",          "icon": "📋", "name": "CRM",                 "price": 200 }
+  ],
+  "clients": [
+    {
+      "name": "Airway Clinic",
+      "sub": "Sleep Clinic · Stockholm, SE",
+      "contact": "Sia Maani",
+      "email": "info@airwayclinic.se",
+      "phone": "—",
+      "city": "Stockholm, Sweden",
+      "website": "airwayclinic.se",
+      "services": { "websites": true, "voice_agents": true, "chatbots": false, "seo": true, "aeo": false, "ads": false, "automation": true, "crm": true },
+      "status": "active",
+      "mrr": 1890,
+      "since": "Dec 2025",
+      "locId": "Z9UtrrCvJc8ObhTIILLF"
+    },
+    {
+      "name": "Altri Medical",
+      "sub": "Medical · Altrincham, UK",
+      "contact": "Nima Hakimmaani",
+      "email": "altrimedical@gmail.com",
+      "phone": "+441****7727",
+      "city": "Altrincham, England",
+      "website": "altrimedical.co.uk",
+      "services": { "websites": true, "voice_agents": false, "chatbots": false, "seo": true, "aeo": false, "ads": false, "automation": false, "crm": true },
+      "status": "active",
+      "mrr": 1097,
+      "since": "Oct 2025",
+      "locId": "pvH5KtdWPkbvSWR49akA"
+    },
+    {
+      "name": "Cloud Hak AI",
+      "sub": "AI Agency · Hove, UK",
+      "contact": "Nima Hakimmaani",
+      "email": "info@cloud-hak.com",
+      "phone": "+447****0042",
+      "city": "Hove, East Sussex",
+      "website": "cloud-hak.com",
+      "services": { "websites": true, "voice_agents": true, "chatbots": true, "seo": true, "aeo": true, "ads": true, "automation": true, "crm": true },
+      "status": "active",
+      "mrr": 0,
+      "since": "Feb 2026",
+      "locId": "09IvUpMsLtP5pFni6mNK"
+    }
+  ]
+}
