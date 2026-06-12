@@ -68,14 +68,14 @@
         "voice_agents": true,
         "chatbots": true,
         "seo": true,
-        "aeo": false,
+        "aeo": true,
         "ads": false,
         "automation": true,
         "crm": true
       },
       "customPricing": {},
       "status": "active",
-      "mrr": 2197,
+      "mrr": 2547,
       "since": "Dec 2025",
       "locId": "Z9UtrrCvJc8ObhTIILLF"
     },
