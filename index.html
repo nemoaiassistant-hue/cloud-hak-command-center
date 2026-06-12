@@ -757,15 +757,14 @@ async function toggleService(locId, serviceId, active) {
     const resp = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ locId, serviceId, active }),
+      body: JSON.stringify({ action: 'toggle', locId, serviceId, active }),
     });
     const result = await resp.json();
     if (result.success) {
-      // Update local state
       const client = allClients.find(c => c.locId === locId);
       if (client) {
         client.services[serviceId] = active;
-        client.mrr = result.newMrr;
+        client.mrr = result.mrr;
       }
       return result;
     }
@@ -773,6 +772,45 @@ async function toggleService(locId, serviceId, active) {
     console.error('Toggle service error:', e);
   }
   return null;
+}
+
+async function setServicePrice(locId, serviceId, price, discount) {
+  try {
+    const resp = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'price', locId, serviceId, price, discount }),
+    });
+    const result = await resp.json();
+    if (result.success) {
+      const client = allClients.find(c => c.locId === locId);
+      if (client) {
+        if (!client.customPricing) client.customPricing = {};
+        if (price != null || discount != null) {
+          client.customPricing[serviceId] = {};
+          if (price != null) client.customPricing[serviceId].price = Number(price);
+          if (discount != null) client.customPricing[serviceId].discount = Number(discount);
+        } else {
+          delete client.customPricing[serviceId];
+        }
+        client.mrr = result.mrr;
+      }
+      return result;
+    }
+  } catch(e) {
+    console.error('Set price error:', e);
+  }
+  return null;
+}
+
+// Helper: get effective price for a service on a client
+function getEffectivePrice(serviceId, defaultPrice, client) {
+  const cp = client.customPricing && client.customPricing[serviceId];
+  if (cp) {
+    if (cp.price != null) return cp.price;
+    if (cp.discount != null) return Math.round(defaultPrice * (1 - cp.discount / 100));
+  }
+  return defaultPrice;
 }
 
 const ACTIVITY = [
@@ -1074,12 +1112,40 @@ function filterServiceTable(btn, status) {
 async function handleToggleService(locId, serviceId, active) {
   const result = await toggleService(locId, serviceId, active);
   if (result && result.success) {
-    // Re-render the client overview to reflect changes
     renderClientOverview();
     populateClientSelector();
     updateBadges();
   } else {
     alert('Failed to update service. Please try again.');
+  }
+}
+
+async function handleSetPrice(locId, serviceId) {
+  const priceInput = document.getElementById('price-' + serviceId);
+  const discountInput = document.getElementById('discount-' + serviceId);
+  const price = priceInput.value.trim();
+  const discount = discountInput.value.trim();
+
+  const result = await setServicePrice(locId, serviceId,
+    price !== '' ? price : null,
+    discount !== '' ? discount : null
+  );
+
+  if (result && result.success) {
+    renderClientOverview();
+    populateClientSelector();
+    updateBadges();
+  } else {
+    alert('Failed to update pricing. Please try again.');
+  }
+}
+
+async function handleClearPrice(locId, serviceId) {
+  const result = await setServicePrice(locId, serviceId, null, null);
+  if (result && result.success) {
+    renderClientOverview();
+    populateClientSelector();
+    updateBadges();
   }
 }
 
@@ -1118,18 +1184,47 @@ function renderClientOverview() {
         <div style="display:grid;gap:8px">
           ${Object.entries(SERVICE_CONFIG).map(([key, sc]) => {
             const isOn = c.services[sc.field];
+            const cp = c.customPricing && c.customPricing[sc.field];
+            const effPrice = getEffectivePrice(sc.field, sc.price, c);
+            const hasCustom = cp && (cp.price != null || cp.discount != null);
+            const customPriceVal = cp && cp.price != null ? cp.price : '';
+            const discountVal = cp && cp.discount != null ? cp.discount : '';
             return `
-              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--light-gray);border-radius:8px">
-                <span style="font-size:18px">${sc.icon}</span>
-                <div style="flex:1">
-                  <div style="font-weight:600;font-size:13px">${sc.name}</div>
-                  <div style="font-size:11px;color:var(--gray)">£${sc.price}/mo</div>
+              <div style="padding:10px 12px;background:var(--light-gray);border-radius:8px;${isOn?'border-left:3px solid var(--green)':''}">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:18px">${sc.icon}</span>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:13px">${sc.name}</div>
+                    <div style="font-size:11px;color:var(--gray)">
+                      ${hasCustom
+                        ? `<span style="text-decoration:line-through;color:var(--gray)">£${sc.price}</span> <span style="color:var(--teal);font-weight:600">£${effPrice}/mo</span> ${cp.discount?'('+cp.discount+'% off)':'(custom)'}`
+                        : '£'+sc.price+'/mo'}
+                    </div>
+                  </div>
+                  <button onclick="handleToggleService('${c.locId}','${sc.field}',${!isOn})"
+                    style="padding:8px 18px;border-radius:24px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;min-width:90px;
+                    border-color:${isOn?'var(--green)':'var(--gray)'};background:${isOn?'var(--green)':'transparent'};color:${isOn?'#fff':'var(--gray)'}">
+                    ${isOn ? 'ON ✓' : 'Activate'}
+                  </button>
                 </div>
-                <button onclick="handleToggleService('${c.locId}','${sc.field}',${!isOn})"
-                  style="padding:8px 18px;border-radius:24px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;min-width:90px;
-                  border-color:${isOn?'var(--green)':'var(--gray)'};background:${isOn?'var(--green)':'transparent'};color:${isOn?'#fff':'var(--gray)'}">
-                  ${isOn ? 'ON ✓' : 'Activate'}
-                </button>
+                ${isOn ? `
+                <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);align-items:center;flex-wrap:wrap">
+                  <span style="font-size:11px;color:var(--gray)">Custom £</span>
+                  <input id="price-${sc.field}" type="number" placeholder="${sc.price}" value="${customPriceVal}"
+                    style="width:70px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)" />
+                  <span style="font-size:11px;color:var(--gray)">or % off</span>
+                  <input id="discount-${sc.field}" type="number" placeholder="0" value="${discountVal}"
+                    style="width:50px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)" />
+                  <button onclick="handleSetPrice('${c.locId}','${sc.field}')"
+                    style="padding:4px 14px;border-radius:16px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:var(--teal);color:#fff">
+                    Save
+                  </button>
+                  ${hasCustom ? `
+                  <button onclick="handleClearPrice('${c.locId}','${sc.field}')"
+                    style="padding:4px 14px;border-radius:16px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--gray)">
+                    Reset
+                  </button>` : ''}
+                </div>` : ''}
               </div>
             `;
           }).join('')}

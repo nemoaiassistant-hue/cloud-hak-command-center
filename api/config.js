@@ -1,6 +1,8 @@
 // /api/config.js — Source of truth: clients.json in the GitHub repo
-// GET  → reads clients.json from repo (or local fallback)
-// POST → updates a client's service toggle via GitHub commit
+// GET  → reads clients.json from repo
+// POST → two actions:
+//   { action: 'toggle', locId, serviceId, active } — toggle service on/off
+//   { action: 'price',  locId, serviceId, price, discount } — set custom price/discount %
 
 const GH_OWNER = 'nemoaiassistant-hue';
 const GH_REPO = 'cloud-hak-command-center';
@@ -43,6 +45,25 @@ async function saveToGitHub(token, content, sha) {
   return resp.json();
 }
 
+// Calculate effective price for a service (custom > discount > default)
+function getEffectivePrice(serviceId, defaultPrice, client) {
+  const cp = client.customPricing?.[serviceId];
+  if (cp) {
+    if (cp.price != null) return cp.price;
+    if (cp.discount != null) return Math.round(defaultPrice * (1 - cp.discount / 100));
+  }
+  return defaultPrice;
+}
+
+// Recalculate client MRR from all active services with custom pricing
+function recalcMrr(client, services) {
+  const defaultPrices = {};
+  services.forEach(s => { defaultPrices[s.id] = s.price; });
+  return Object.entries(client.services)
+    .filter(([_, on]) => on)
+    .reduce((sum, [id]) => sum + getEffectivePrice(id, defaultPrices[id] || 0, client), 0);
+}
+
 export default async function handler(req, res) {
   try {
     const token = process.env.GH_TOKEN;
@@ -54,32 +75,51 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { locId, serviceId, active } = req.body;
-      if (!locId || !serviceId || typeof active !== 'boolean') {
-        return res.status(400).json({ error: 'locId, serviceId, and active (boolean) required' });
-      }
-
+      const body = req.body;
+      const action = body.action || 'toggle';
       const { json: data, sha } = await getFromGitHub(token);
-      const client = data.clients.find(c => c.locId === locId);
+      const client = data.clients.find(c => c.locId === body.locId);
       if (!client) return res.status(404).json({ error: 'Client not found' });
 
-      client.services[serviceId] = active;
+      if (!client.customPricing) client.customPricing = {};
+
+      if (action === 'toggle') {
+        const { serviceId, active } = body;
+        if (!serviceId || typeof active !== 'boolean') {
+          return res.status(400).json({ error: 'serviceId and active (boolean) required' });
+        }
+        client.services[serviceId] = active;
+      }
+
+      else if (action === 'price') {
+        const { serviceId, price, discount } = body;
+        if (!serviceId) return res.status(400).json({ error: 'serviceId required' });
+
+        // price = null means clear custom price, discount = null means clear discount
+        if (!client.customPricing[serviceId]) client.customPricing[serviceId] = {};
+        client.customPricing[serviceId].price = price != null ? Number(price) : undefined;
+        client.customPricing[serviceId].discount = discount != null ? Number(discount) : undefined;
+
+        // Clean up — remove empty entries
+        const cp = client.customPricing[serviceId];
+        if (cp.price == null && cp.discount == null) {
+          delete client.customPricing[serviceId];
+        }
+      }
+
+      else {
+        return res.status(400).json({ error: 'Unknown action: ' + action });
+      }
 
       // Recalculate MRR
-      const prices = {};
-      data.services.forEach(s => { prices[s.id] = s.price; });
-      client.mrr = Object.entries(client.services)
-        .filter(([_, on]) => on)
-        .reduce((sum, [id]) => sum + (prices[id] || 0), 0);
+      client.mrr = recalcMrr(client, data.services);
 
       await saveToGitHub(token, data, sha);
 
       return res.status(200).json({
         success: true,
         client: client.name,
-        service: serviceId,
-        active: active,
-        newMrr: client.mrr,
+        mrr: client.mrr,
       });
     }
 
