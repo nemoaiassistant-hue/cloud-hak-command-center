@@ -851,6 +851,14 @@ function populateClientSelector() {
   document.getElementById('selector-dropdown').innerHTML = html;
 }
 
+function saveNavState() {
+  localStorage.setItem('cc_state', JSON.stringify({
+    client: selectedClient ? selectedClient.locId : null,
+    view: currentView,
+    wsTabs: wsActiveTab,
+  }));
+}
+
 function selectClient(locId) {
   if (locId === null) {
     selectedClient = null;
@@ -955,6 +963,7 @@ function switchView(viewId) {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('overlay').classList.remove('show');
   }
+  saveNavState();
 }
 
 // ===== RENDER OVERVIEW =====
@@ -1350,6 +1359,7 @@ function renderClientServicePage(viewId) {
 function switchWsTab(viewId, tab) {
   wsActiveTab[viewId] = tab;
   renderClientServicePage(viewId);
+  saveNavState();
 }
 
 // Helper: stat card
@@ -2510,6 +2520,21 @@ async function init() {
   renderReports();
   renderSettings();
   updateBadges();
+
+  // Restore saved navigation state
+  try {
+    const saved = JSON.parse(localStorage.getItem('cc_state'));
+    if (saved) {
+      if (saved.client) {
+        selectedClient = allClients.find(c => c.locId === saved.client) || null;
+        updateSelectorLabel();
+        updateSidebar();
+        updateContextBar();
+      }
+      if (saved.wsTabs) wsActiveTab = saved.wsTabs;
+      if (saved.view) switchView(saved.view);
+    }
+  } catch(e) { /* fresh start if no saved state */ }
 }
 
 init();
