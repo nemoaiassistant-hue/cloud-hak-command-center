@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Assistant Demo</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#0a0b14; color:#e4e4e7; height:100vh; display:flex; flex-direction:column; }
+
+/* Header */
+.header { background:linear-gradient(135deg,#1a1d2e,#0f1120); padding:20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:14px; }
+.header-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.header-info h1 { font-size:17px; font-weight:600; }
+.header-info p { font-size:13px; color:#71717a; }
+.header-badge { margin-left:auto; background:rgba(34,197,94,0.15); color:#22c55e; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; }
+.header-badge::before { content:''; width:7px; height:7px; border-radius:50%; background:#22c55e; }
+
+/* Chat area */
+.chat-area { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
+.msg { max-width:85%; padding:13px 17px; border-radius:18px; font-size:15px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.3s ease; }
+.msg.user { align-self:flex-end; background:linear-gradient(135deg,#6366f1,#7c3aed); color:white; border-bottom-right-radius:4px; }
+.msg.bot { align-self:flex-start; background:#1a1d2e; border:1px solid rgba(255,255,255,0.06); border-bottom-left-radius:4px; }
+.msg.system { align-self:center; background:rgba(255,255,255,0.03); color:#71717a; font-size:13px; padding:8px 16px; border-radius:12px; max-width:90%; text-align:center; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+/* Typing indicator */
+.typing { align-self:flex-start; background:#1a1d2e; border:1px solid rgba(255,255,255,0.06); padding:14px 18px; border-radius:18px; border-bottom-left-radius:4px; display:flex; gap:5px; }
+.typing span { width:8px; height:8px; border-radius:50%; background:#52525b; animation:blink 1.4s infinite; }
+.typing span:nth-child(2){animation-delay:0.2s;}
+.typing span:nth-child(3){animation-delay:0.4s;}
+@keyframes blink { 0%,60%,100%{opacity:0.3;} 30%{opacity:1;} }
+
+/* Input */
+.input-area { padding:16px 20px 20px; border-top:1px solid rgba(255,255,255,0.06); background:#0a0b14; }
+.input-box { display:flex; gap:10px; align-items:flex-end; background:#1a1d2e; border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:6px 6px 6px 18px; }
+.input-box:focus-within { border-color:#6366f1; }
+.input-box textarea { flex:1; background:transparent; border:none; color:#e4e4e7; font-size:15px; resize:none; outline:none; font-family:inherit; max-height:100px; line-height:1.4; padding:8px 0; }
+.send-btn { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#7c3aed); border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; transition:transform 0.15s,opacity 0.15s; }
+.send-btn:active { transform:scale(0.92); }
+.send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* Powered by footer */
+.powered { text-align:center; padding:8px; font-size:11px; color:#3f3f46; }
+.powered a { color:#52525b; text-decoration:none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-avatar" id="avatar">🤖</div>
+  <div class="header-info">
+    <h1 id="agent-name">AI Assistant</h1>
+    <p id="agent-desc">Loading...</p>
+  </div>
+  <div class="header-badge">Online</div>
+</div>
+
+<div class="chat-area" id="chat"></div>
+
+<div class="input-area">
+  <div class="input-box">
+    <textarea id="msg-input" rows="1" placeholder="Type your message..." autofocus></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<div class="powered">Powered by <a href="https://cloud-hak.com" target="_blank">Cloud Hak AI</a></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const WF_ID = params.get('agent') || params.get('workflow_id');
+const API = '/api/demo';
+let RUN_ID = null;
+let REVISION = null;
+let sending = false;
+
+const chat = document.getElementById('chat');
+const input = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
+
+// Auto-resize textarea
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+});
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function addMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function renderMessages(messages) {
+  chat.innerHTML = '';
+  for (const m of messages) {
+    if (m.content && m.content.trim()) addMsg(m.role === 'user' ? 'user' : 'bot', m.content);
+  }
+}
+
+// Init: load agent info + start session
+async function init() {
+  if (!WF_ID) {
+    addMsg('system', 'No agent ID specified. Add ?agent=ID to the URL.');
+    return;
+  }
+
+  try {
+    // Get agent info
+    const infoResp = await fetch(`${API}?action=info&workflow_id=${WF_ID}`);
+    const info = await infoResp.json();
+    if (info.error) throw new Error(info.error);
+
+    document.getElementById('agent-name').textContent = info.name || 'AI Assistant';
+    document.getElementById('agent-desc').textContent = info.description || 'Ask me anything!';
+    document.title = info.name || 'AI Assistant Demo';
+
+    // Start chat session
+    showTyping();
+    const startResp = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', workflow_id: parseInt(WF_ID) }),
+    });
+    const session = await startResp.json();
+    if (session.error) throw new Error(session.error);
+
+    RUN_ID = session.run_id;
+    REVISION = session.revision;
+
+    hideTyping();
+    if (session.messages && session.messages.length > 0) {
+      renderMessages(session.messages);
+    } else {
+      // Show greeting as first message
+      if (info.greeting) addMsg('bot', info.greeting);
+    }
+  } catch (e) {
+    hideTyping();
+    addMsg('system', `Connection error: ${e.message}. The AI server may be offline. Please try again later.`);
+  }
+}
+
+async function sendMessage() {
+  if (sending) return;
+  const text = input.value.trim();
+  if (!text || !RUN_ID) return;
+
+  sending = true;
+  sendBtn.disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMsg('user', text);
+  showTyping();
+
+  try {
+    const resp = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'send', workflow_id: parseInt(WF_ID), run_id: RUN_ID, message: text }),
+    });
+    const data = await resp.json();
+    hideTyping();
+
+    if (data.error) {
+      addMsg('system', `Error: ${data.error}`);
+    } else {
+      // Render all messages (keeps history clean)
+      renderMessages(data.messages);
+    }
+
+    if (data.is_completed) {
+      addMsg('system', 'Session ended. Refresh to start a new conversation.');
+      input.disabled = true;
+      sendBtn.disabled = true;
+    }
+  } catch (e) {
+    hideTyping();
+    addMsg('system', `Connection error: ${e.message}`);
+  }
+
+  sending = false;
+  sendBtn.disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>

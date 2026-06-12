@@ -411,13 +411,15 @@ Generate a JSON object with these exact keys:
       }
 
       const clientNote = client_name ? `Mapped to ${client_name}. ` : '';
+      const demoUrl = `${process.env.VERCEL_URL ? 'https://cloud-hak-command-center.vercel.app' : ''}/demo.html?agent=${wfId}`;
       return {
         success: true,
         agent_id: wfId,
         agent_name: agentName,
         business: finalBusinessName,
         summary: agentConfig.summary,
-        message: `Agent "${agentName}" created on Dograh. ID #${wfId}. ${agentConfig.summary} ${clientNote}You can test it in the Dograh builder or embed the widget on the website. The agent knows about services, pricing, FAQs, and booking info from ${finalBusinessName}'s website.`
+        demo_url: demoUrl,
+        message: `Agent "${agentName}" created on Dograh. ID #${wfId}. ${agentConfig.summary} ${clientNote}Demo link for client: ${demoUrl}`
       };
     } catch (e) {
       return { error: `Failed to create agent: ${e.message}` };
