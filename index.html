@@ -168,23 +168,21 @@ tr:hover{background:var(--border)}
 .empty-state .empty-icon{font-size:48px;margin-bottom:12px;opacity:0.3}
 .empty-state h3{font-size:16px;color:#999;margin-bottom:4px}
 
-/* ===== CLIENT SELECTOR ===== */
-.client-selector{
-  position:relative;
-}
+/* ===== CLIENT SELECTOR (in sidebar) ===== */
+.client-selector{position:relative;margin:8px 16px 4px}
 .client-selector-btn{
-  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  display:flex;align-items:center;gap:8px;padding:10px 12px;width:100%;
   background:var(--light-gray);border:1px solid var(--border);border-radius:8px;
   cursor:pointer;font-size:13px;font-weight:600;color:var(--text);
-  font-family:inherit;transition:all 0.15s;min-width:200px;
+  font-family:inherit;transition:all 0.15s;
 }
 .client-selector-btn:hover{border-color:var(--teal)}
 .client-selector-btn .chevron{margin-left:auto;font-size:10px;color:var(--gray);transition:transform 0.2s}
 .client-selector.open .chevron{transform:rotate(180deg)}
 .client-selector-dropdown{
-  display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;
+  display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
   background:var(--dark);border:1px solid var(--border);border-radius:10px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);z-index:200;max-height:320px;overflow-y:auto;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:300;max-height:300px;overflow-y:auto;
 }
 .client-selector.open .client-selector-dropdown{display:block}
 .client-option{
@@ -316,9 +314,7 @@ tr:hover{background:var(--border)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay.show{display:block}
   .mobile-header{display:flex}
-  #mobile-selector-wrap{display:block !important}
   .topbar{display:none}
-  .client-selector{display:none}
   .content{padding:16px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .stat-card .stat-value{font-size:22px}
@@ -340,6 +336,16 @@ tr:hover{background:var(--border)}
       <div class="brand-logo">CLOUD HAK</div>
       <div class="brand-sub">Command Center</div>
     </div>
+  </div>
+
+  <!-- Client selector -->
+  <div class="client-selector" id="clientSelector">
+    <button class="client-selector-btn" onclick="toggleClientSelector(event)">
+      <span style="font-size:16px">🏢</span>
+      <span id="selector-label">All Clients</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="client-selector-dropdown" id="selector-dropdown"></div>
   </div>
 
   <nav class="nav">
@@ -408,29 +414,12 @@ tr:hover{background:var(--border)}
     <span class="brand-logo">CLOUD HAK</span>
     <div class="icon-btn" id="themeToggleMobile" title="Toggle theme" onclick="toggleTheme()" style="margin-left:auto;width:32px;height:32px;font-size:14px">🌙</div>
   </div>
-  <!-- Mobile client selector (below header) -->
-  <div style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--dark);position:relative;z-index:250" id="mobile-selector-wrap">
-    <button class="client-selector-btn" style="width:100%" onclick="toggleClientSelector(event)">
-      <span style="font-size:16px">🏢</span>
-      <span id="selector-label-mobile">All Clients</span>
-      <span class="chevron">▼</span>
-    </button>
-    <div class="client-selector-dropdown" id="mobile-selector-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:16px;right:16px;max-width:400px"></div>
-  </div>
 
   <!-- Desktop topbar -->
   <div class="topbar">
     <div>
       <div class="breadcrumb" id="breadcrumb">Cloud Hak / Overview</div>
       <h1 id="page-title">Overview</h1>
-    </div>
-    <div class="client-selector" id="clientSelector" style="margin-left:24px">
-      <button class="client-selector-btn" onclick="toggleClientSelector()">
-        <span style="font-size:16px">🏢</span>
-        <span id="selector-label">All Clients</span>
-        <span class="chevron">▼</span>
-      </button>
-      <div class="client-selector-dropdown" id="selector-dropdown"></div>
     </div>
     <div class="topbar-actions">
       <input type="text" class="search" placeholder="Search clients..." id="globalSearch" oninput="handleSearch(this.value)">
@@ -770,52 +759,33 @@ const ACTIVITY = [
   { icon:'⏸️', bg:'rgba(249,115,22,0.12)', text:'<b>Eastbourne Legal</b> paused Voice AI', time:'3 days ago' },
 ];
 
-// ===== CLIENT SELECTOR =====
+// ===== CLIENT SELECTOR (sidebar) =====
 function toggleClientSelector(ev) {
-  // Check if mobile dropdown is visible
-  const mobileWrap = document.getElementById('mobile-selector-wrap');
-  const isMobile = mobileWrap && getComputedStyle(mobileWrap).display !== 'none';
-
-  if (isMobile) {
-    const mdd = document.getElementById('mobile-selector-dropdown');
-    const isOpen = mdd.style.display === 'block';
-    mdd.style.display = isOpen ? 'none' : 'block';
-    mobileWrap.classList.toggle('open', !isOpen);
-  } else {
-    document.getElementById('clientSelector').classList.toggle('open');
-  }
+  document.getElementById('clientSelector').classList.toggle('open');
   if (ev) ev.stopPropagation();
 }
 
-// Close dropdowns on outside click
+// Close dropdown on outside click
 document.addEventListener('click', function(e) {
   const sel = document.getElementById('clientSelector');
-  const mdd = document.getElementById('mobile-selector-dropdown');
   if (sel && !sel.contains(e.target)) sel.classList.remove('open');
-  if (mdd && !document.getElementById('mobile-selector-wrap').contains(e.target)) mdd.style.display = 'none';
 });
 
 function populateClientSelector() {
-  const html = `<div class="client-option all-clients ${!selectedClient?'selected':''}" onclick="selectClient(null)">
+  let html = `<div class="client-option all-clients ${!selectedClient?'selected':''}" onclick="selectClient(null)">
     <span class="opt-icon">🏢</span> All Clients
     <span class="opt-sub">${allClients.length} accounts</span>
   </div>`;
-  let items = html;
   allClients.forEach(c => {
     const isSel = selectedClient && selectedClient.locId === c.locId;
     const svcCount = Object.values(c.services).filter(Boolean).length;
-    items += `<div class="client-option ${isSel?'selected':''}" onclick="selectClient('${c.locId}')">
+    html += `<div class="client-option ${isSel?'selected':''}" onclick="selectClient('${c.locId}')">
       <span class="opt-icon">${c.status==='active'?'✅':'⏸️'}</span>
       ${c.name}
       <span class="opt-sub">${svcCount} services · £${c.mrr}/mo</span>
     </div>`;
   });
-
-  // Populate both desktop and mobile dropdowns
-  const dd = document.getElementById('selector-dropdown');
-  const mdd = document.getElementById('mobile-selector-dropdown');
-  if (dd) dd.innerHTML = items;
-  if (mdd) mdd.innerHTML = items;
+  document.getElementById('selector-dropdown').innerHTML = html;
 }
 
 function selectClient(locId) {
@@ -825,12 +795,9 @@ function selectClient(locId) {
     selectedClient = allClients.find(c => c.locId === locId);
   }
   document.getElementById('clientSelector').classList.remove('open');
-  const mdd = document.getElementById('mobile-selector-dropdown');
-  if (mdd) mdd.style.display = 'none';
   updateSelectorLabel();
   updateSidebar();
   updateContextBar();
-  // Switch to overview when selecting a client
   switchView('overview');
 }
 
@@ -841,8 +808,6 @@ function clearClientSelection() {
 function updateSelectorLabel() {
   const label = selectedClient ? selectedClient.name : 'All Clients';
   document.getElementById('selector-label').textContent = label;
-  const mLabel = document.getElementById('selector-label-mobile');
-  if (mLabel) mLabel.textContent = label;
 }
 
 function updateContextBar() {
