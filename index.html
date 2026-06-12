@@ -2624,8 +2624,28 @@ async function init() {
 init();
 
 // ===== AI CHAT WIDGET =====
-let chatMessages = [];
+let chatMessages = JSON.parse(localStorage.getItem('cc_chat') || '[]');
 let chatOpen = false;
+
+function saveChat() {
+  if (chatMessages.length > 50) chatMessages = chatMessages.slice(-50);
+  localStorage.setItem('cc_chat', JSON.stringify(chatMessages));
+}
+
+function restoreChat() {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  container.innerHTML = '';
+  if (chatMessages.length === 0) {
+    appendChatMsg('assistant', 'Hi! I\'m your Command Center assistant. Ask me to toggle services, set prices, or check your MRR.');
+  } else {
+    chatMessages.forEach(m => {
+      appendChatMsg(m.role, (m.content || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'));
+    });
+  }
+}
+
+restoreChat();
 
 function toggleChat() {
   chatOpen = !chatOpen;
@@ -2673,6 +2693,7 @@ async function sendChat() {
 
   appendChatMsg('user', text.replace(/</g, '&lt;'));
   chatMessages.push({ role: 'user', content: text });
+  saveChat();
   showChatTyping();
 
   try {
@@ -2689,6 +2710,7 @@ async function sendChat() {
     } else {
       appendChatMsg('assistant', (data.reply || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'));
       chatMessages.push({ role: 'assistant', content: data.reply });
+      saveChat();
 
       // If an action was executed, reload config + re-render
       if (data.action && data.action.result && data.action.result.success) {
