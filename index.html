@@ -409,12 +409,13 @@ tr:hover{background:var(--border)}
     <div class="icon-btn" id="themeToggleMobile" title="Toggle theme" onclick="toggleTheme()" style="margin-left:auto;width:32px;height:32px;font-size:14px">🌙</div>
   </div>
   <!-- Mobile client selector (below header) -->
-  <div style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--dark)" id="mobile-selector-wrap">
-    <button class="client-selector-btn" style="width:100%" onclick="toggleClientSelector()">
+  <div style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--dark);position:relative;z-index:250" id="mobile-selector-wrap">
+    <button class="client-selector-btn" style="width:100%" onclick="toggleClientSelector(event)">
       <span style="font-size:16px">🏢</span>
       <span id="selector-label-mobile">All Clients</span>
       <span class="chevron">▼</span>
     </button>
+    <div class="client-selector-dropdown" id="mobile-selector-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:16px;right:16px;max-width:400px"></div>
   </div>
 
   <!-- Desktop topbar -->
@@ -804,26 +805,51 @@ const ACTIVITY = [
 ];
 
 // ===== CLIENT SELECTOR =====
-function toggleClientSelector() {
-  document.getElementById('clientSelector').classList.toggle('open');
+function toggleClientSelector(ev) {
+  // Check if mobile dropdown is visible
+  const mobileWrap = document.getElementById('mobile-selector-wrap');
+  const isMobile = mobileWrap && getComputedStyle(mobileWrap).display !== 'none';
+
+  if (isMobile) {
+    const mdd = document.getElementById('mobile-selector-dropdown');
+    const isOpen = mdd.style.display === 'block';
+    mdd.style.display = isOpen ? 'none' : 'block';
+    mobileWrap.classList.toggle('open', !isOpen);
+  } else {
+    document.getElementById('clientSelector').classList.toggle('open');
+  }
+  if (ev) ev.stopPropagation();
 }
 
+// Close dropdowns on outside click
+document.addEventListener('click', function(e) {
+  const sel = document.getElementById('clientSelector');
+  const mdd = document.getElementById('mobile-selector-dropdown');
+  if (sel && !sel.contains(e.target)) sel.classList.remove('open');
+  if (mdd && !document.getElementById('mobile-selector-wrap').contains(e.target)) mdd.style.display = 'none';
+});
+
 function populateClientSelector() {
-  const dropdown = document.getElementById('selector-dropdown');
-  let html = `<div class="client-option all-clients ${!selectedClient?'selected':''}" onclick="selectClient(null)">
+  const html = `<div class="client-option all-clients ${!selectedClient?'selected':''}" onclick="selectClient(null)">
     <span class="opt-icon">🏢</span> All Clients
     <span class="opt-sub">${allClients.length} accounts</span>
   </div>`;
+  let items = html;
   allClients.forEach(c => {
     const isSel = selectedClient && selectedClient.locId === c.locId;
     const svcCount = Object.values(c.services).filter(Boolean).length;
-    html += `<div class="client-option ${isSel?'selected':''}" onclick="selectClient('${c.locId}')">
+    items += `<div class="client-option ${isSel?'selected':''}" onclick="selectClient('${c.locId}')">
       <span class="opt-icon">${c.status==='active'?'✅':'⏸️'}</span>
       ${c.name}
       <span class="opt-sub">${svcCount} services · £${c.mrr}/mo</span>
     </div>`;
   });
-  dropdown.innerHTML = html;
+
+  // Populate both desktop and mobile dropdowns
+  const dd = document.getElementById('selector-dropdown');
+  const mdd = document.getElementById('mobile-selector-dropdown');
+  if (dd) dd.innerHTML = items;
+  if (mdd) mdd.innerHTML = items;
 }
 
 function selectClient(locId) {
@@ -833,6 +859,8 @@ function selectClient(locId) {
     selectedClient = allClients.find(c => c.locId === locId);
   }
   document.getElementById('clientSelector').classList.remove('open');
+  const mdd = document.getElementById('mobile-selector-dropdown');
+  if (mdd) mdd.style.display = 'none';
   updateSelectorLabel();
   updateSidebar();
   updateContextBar();
