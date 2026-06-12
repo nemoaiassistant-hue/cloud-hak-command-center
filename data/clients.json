@@ -96,13 +96,15 @@
         "aeo": false,
         "ads": false,
         "automation": false,
-        "crm": true
+        "crm": true,
+        "voice-agents": true
       },
       "customPricing": {},
       "status": "active",
       "mrr": 1097,
       "since": "Oct 2025",
-      "locId": "pvH5KtdWPkbvSWR49akA"
+      "locId": "pvH5KtdWPkbvSWR49akA",
+      "dograhAgentId": 3
     },
     {
       "name": "Cloud Hak AI",
