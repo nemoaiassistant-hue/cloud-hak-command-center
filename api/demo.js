@@ -54,8 +54,8 @@ export default async function handler(req, res) {
 
       return res.json({
         name: wf.name,
-        greeting: startNode?.data?.greeting || firstLine.substring(0, 100) || 'Hello! How can I help you today?',
-        description: firstLine.substring(0, 200),
+        greeting: startNode?.data?.greeting && !startNode.data.greeting.startsWith('You are') ? startNode.data.greeting : 'Hello! How can I help you today?',
+        description: `AI Assistant — ask me anything about ${wf.name.replace(/ - inbound$|- AI Assistant$/i, '').trim()}`,
         workflow_id: parseInt(workflow_id),
       });
     }
