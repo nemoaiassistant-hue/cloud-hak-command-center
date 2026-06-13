@@ -131,15 +131,5 @@
       "locId": "09IvUpMsLtP5pFni6mNK"
     }
   ],
-  "demos": [
-    {
-      "business": "Altri Medical (Test)",
-      "website": "https://www.altrimedical.co.uk",
-      "agentId": 6,
-      "agentName": "Altri Medical (Test) AI Assistant",
-      "type": "chat",
-      "created": "2026-06-13T10:27:08.731Z",
-      "status": "demo"
-    }
-  ]
+  "demos": []
 }
