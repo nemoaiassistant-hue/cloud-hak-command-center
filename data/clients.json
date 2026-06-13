@@ -130,5 +130,16 @@
       "since": "Feb 2026",
       "locId": "09IvUpMsLtP5pFni6mNK"
     }
+  ],
+  "demos": [
+    {
+      "business": "Airway Clinic (Demo)",
+      "website": "https://www.airwayclinic.se",
+      "agentId": 4,
+      "agentName": "Airway Clinic (Demo) AI Assistant",
+      "type": "chat",
+      "created": "2026-06-13T07:59:00.170Z",
+      "status": "demo"
+    }
   ]
 }
