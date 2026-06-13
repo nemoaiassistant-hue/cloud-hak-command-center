@@ -199,7 +199,7 @@ async function executeFunction(name, args, ghToken, config) {
   }
 
   if (name === 'create_agent') {
-    const { website_url, business_name, client_name, agent_type } = args;
+    const { website_url, business_name, client_name, agent_type, save_as_demo = true } = args;
     // Ensure URL has protocol
     const url = website_url.match(/^https?:\/\//) ? website_url : `https://${website_url}`;
     const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
@@ -335,8 +335,8 @@ Generate a JSON object with these exact keys:
         // Publishing may need a separate step - that's OK
       }
 
-      // Step 6: Save to demos array in clients.json (if no client_name specified)
-      if (!client_name) {
+      // Step 6: Save to demos array in clients.json (if save_as_demo or no client_name)
+      if (save_as_demo || !client_name) {
         try {
           const ghToken = process.env.GH_TOKEN;
           const ghResp = await fetch(`https://api.github.com/repos/nemoaiassistant-hue/cloud-hak-command-center/contents/data/clients.json`, {
@@ -380,8 +380,8 @@ Generate a JSON object with these exact keys:
         }
       }
 
-      const clientNote = client_name ? `Mapped to ${client_name}. ` : '';
-      const demoUrl = `${process.env.VERCEL_URL ? 'https://cloud-hak-command-center.vercel.app' : ''}/demo.html?agent=${wfId}`;
+      const clientNote = (client_name && !save_as_demo) ? `Mapped to ${client_name}. ` : 'Saved to Demo Lab. ';
+      const demoUrl = `https://cloud-hak-command-center.vercel.app/demo.html?agent=${wfId}`;
       return {
         success: true,
         agent_id: wfId,
@@ -389,7 +389,7 @@ Generate a JSON object with these exact keys:
         business: finalBusinessName,
         summary: agentConfig.summary,
         demo_url: demoUrl,
-        message: `Agent "${agentName}" created on Dograh. ID #${wfId}. ${agentConfig.summary} ${clientNote}Demo link for client: ${demoUrl}`
+        message: `Agent "${agentName}" created on Dograh. ID #${wfId}. ${agentConfig.summary} ${clientNote}Demo link: ${demoUrl}`
       };
     } catch (e) {
       return { error: `Failed to create agent: ${e.message}` };
@@ -474,8 +474,9 @@ const TOOLS = [
         properties: {
           website_url: { type: 'string', description: 'The business website URL to scrape (e.g. "https://airwayclinic.se")' },
           business_name: { type: 'string', description: 'Business name (optional, will be extracted from website if not provided)' },
-          client_name: { type: 'string', description: 'Client name in Command Center to map the agent to (e.g. "Airway Clinic")' },
+          client_name: { type: 'string', description: 'Existing client name to map to. ONLY set if the business is already a Cloud Hak client. Leave empty for prospect demos.' },
           agent_type: { type: 'string', enum: ['voice', 'chat'], description: 'Voice agent (WebRTC widget) or text chat agent', default: 'chat' },
+          save_as_demo: { type: 'boolean', description: 'If true, save as a prospect demo in Demo Lab instead of mapping to a client. Set to true when the user says "demo", "prospect", "new business", or the business is NOT an existing Cloud Hak client.', default: true },
         },
         required: ['website_url'],
       },
@@ -491,7 +492,12 @@ You can:
 - Look up client details and MRR
 - Give agency-wide overviews
 - Check the status of AI voice agents (Dograh platform)
-- Create new AI agents from a business website URL (automatically scrapes the site, generates the agent persona, creates it on Dograh, and maps it to a client)
+- Create new AI agents from a business website URL (automatically scrapes the site, generates the agent persona, creates it on Dograh)
+
+IMPORTANT for create_agent:
+- If the user says "demo", "prospect", "new business", or the business is NOT an existing Cloud Hak client: set save_as_demo=true and DO NOT set client_name
+- Only set client_name if explicitly told to map to an existing client like "Airway" or "Altri"
+- Existing clients: Airway Clinic, Altri Medical, Cloud Hak AI
 
 Be concise and direct. When you execute an action, confirm what changed in one sentence. Use £ for all prices. You are speaking to Nima, the owner of Cloud Hak.`;
 
