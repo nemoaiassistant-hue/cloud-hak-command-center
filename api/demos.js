@@ -48,19 +48,22 @@ async function dograhLogin() {
 }
 
 async function createDograhWorkflow(token, agentName, globalPrompt, startPrompt, mainPrompt, greeting) {
+  // IMPORTANT: Must match SDK-generated format exactly — string node IDs, proper structure
+  // SDK uses: node "1" (startCall), "2" (agentNode), "3" (globalNode), "4" (endCall)
+  // Edges: source/target as strings matching node IDs
   const definition = {
     nodes: [
-      { id: 1, type: 'startCall', data: { prompt: startPrompt, name: 'Start', greeting, greeting_type: 'text', allow_interrupt: false, add_global_prompt: true, is_start: true, is_static: false, wait_for_user_response: false, detect_voicemail: false, delayed_start: false, invalid: false, validationMessage: null, selected_through_edge: false, hovered_through_edge: false } },
-      { id: 2, type: 'agentNode', data: { prompt: mainPrompt, name: 'Main Conversation', allow_interrupt: false, add_global_prompt: true, extraction_enabled: false, extraction_prompt: '', extraction_variables: [], invalid: false, validationMessage: null, selected_through_edge: false, hovered_through_edge: false } },
-      { id: 0, type: 'globalNode', data: { prompt: globalPrompt, name: 'Global Node', allow_interrupt: false, is_static: false, invalid: false, validationMessage: null } },
-      { id: 4, type: 'endCall', data: { prompt: 'The conversation is complete. Say a brief polite goodbye and end naturally.', name: 'End Call', allow_interrupt: false, add_global_prompt: false, is_end: true, is_static: false, extraction_enabled: false, extraction_prompt: '', extraction_variables: [], invalid: false, validationMessage: null, selected_through_edge: false, hovered_through_edge: false } },
+      { id: "1", type: "startCall", position: { x: 0, y: 0 }, data: { name: "Start", greeting_type: "text", prompt: startPrompt, greeting, allow_interrupt: false, add_global_prompt: true, delayed_start: false, delayed_start_duration: 2, extraction_enabled: false, pre_call_fetch_enabled: false } },
+      { id: "2", type: "agentNode", position: { x: 400, y: 200 }, data: { name: "Main Conversation", prompt: mainPrompt, allow_interrupt: true, add_global_prompt: true, extraction_enabled: false } },
+      { id: "3", type: "globalNode", position: { x: 0, y: 0 }, data: { name: "Global Node", prompt: globalPrompt } },
+      { id: "4", type: "endCall", position: { x: 400, y: 200 }, data: { name: "End Call", prompt: "The conversation is complete. Say a brief polite goodbye and end naturally.", add_global_prompt: false, extraction_enabled: false } },
     ],
     edges: [
-      { id: '1-2', source: '1', target: '2', type: 'custom', animated: true, selected: false, sourceHandle: null, targetHandle: null, data: { label: 'Continue', condition: 'Move to main conversation after greeting the visitor and understanding their request.', invalid: false, validationMessage: null } },
-      { id: '1-4', source: '1', target: '4', type: 'custom', animated: true, selected: false, sourceHandle: null, targetHandle: null, data: { label: 'End', condition: 'End if visitor does not want to continue.', invalid: false, validationMessage: null } },
-      { id: '2-4', source: '2', target: '4', type: 'custom', animated: true, selected: false, sourceHandle: null, targetHandle: null, data: { label: 'End', condition: 'End when questions are fully answered.', invalid: false, validationMessage: null } },
+      { id: "1-2", source: "1", target: "2", data: { label: "Continue to main", condition: "Move to the main conversation after greeting and understanding the visitor's needs." } },
+      { id: "1-4", source: "1", target: "4", data: { label: "End immediately", condition: "End if the visitor does not want to continue." } },
+      { id: "2-4", source: "2", target: "4", data: { label: "End conversation", condition: "End when the visitor's questions are fully answered." } },
     ],
-    viewport: { zoom: 0.8, x: 100, y: 50 },
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 
   // Create workflow
