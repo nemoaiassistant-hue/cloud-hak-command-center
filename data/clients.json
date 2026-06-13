@@ -156,6 +156,13 @@
       "type": "chat",
       "created": "2026-06-13T11:00:09.694Z",
       "status": "demo"
+    },
+    {
+      "agentId": 14,
+      "business": "Airway Clinic Stockholm",
+      "website": "https://www.airwayclinic.se",
+      "type": "chat",
+      "created": "2026-06-13T11:04:39.415Z"
     }
   ]
 }
