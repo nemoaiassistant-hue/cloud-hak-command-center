@@ -395,10 +395,10 @@ tr:hover{background:var(--border)}
 
 <aside class="sidebar" id="sidebar">
   <div class="brand">
-    <a href="https://cloud-hak.com" target="_blank" rel="noopener" style="text-decoration:none">
+    <div onclick="switchView('overview')" style="cursor:pointer">
       <div class="brand-logo">CLOUD HAK</div>
       <div class="brand-sub">Command Center</div>
-    </a>
+    </div>
   </div>
 
   <!-- Client selector -->
@@ -478,7 +478,7 @@ tr:hover{background:var(--border)}
   <!-- Mobile header -->
   <div class="mobile-header">
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-    <a href="https://cloud-hak.com" target="_blank" rel="noopener" style="text-decoration:none"><span class="brand-logo">CLOUD HAK</span></a>
+    <span class="brand-logo" onclick="switchView('overview')" style="cursor:pointer">CLOUD HAK</span>
     <div class="icon-btn" id="themeToggleMobile" title="Toggle theme" onclick="toggleTheme()" style="margin-left:auto;width:32px;height:32px;font-size:14px">🌙</div>
   </div>
 
