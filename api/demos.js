@@ -64,10 +64,10 @@ async function createDograhWorkflow(token, agentName, globalPrompt, startPrompt,
   };
 
   // Create workflow
-  const createResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/create`, {
+  const createResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/create/definition`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: agentName, description: 'Demo agent created by Cloud Hak', agent_type: 'textchat', workflow_definition: definition }),
+    body: JSON.stringify({ name: agentName, workflow_definition: definition }),
   });
   if (!createResp.ok) {
     const err = await createResp.text();
