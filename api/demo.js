@@ -72,11 +72,16 @@ export default async function handler(req, res) {
         return res.status(resp.status).json({ error: `Failed to start session: ${err.substring(0, 200)}` });
       }
       const session = await resp.json();
-      // Extract messages from session_data
-      const messages = (session.session_data?.turns || []).map(t => ({
-        role: t.role || (t.type === 'user' ? 'user' : 'assistant'),
-        content: t.text || t.content || '',
-      }));
+      // Extract messages from session_data.turns (each turn has user_message + assistant_message)
+      const messages = [];
+      for (const t of (session.session_data?.turns || [])) {
+        if (t.user_message && t.user_message.text) {
+          messages.push({ role: 'user', content: t.user_message.text });
+        }
+        if (t.assistant_message && t.assistant_message.text) {
+          messages.push({ role: 'assistant', content: t.assistant_message.text });
+        }
+      }
       return res.json({
         run_id: session.workflow_run_id,
         revision: session.revision,
@@ -97,10 +102,15 @@ export default async function handler(req, res) {
         return res.status(resp.status).json({ error: `Message failed: ${err.substring(0, 200)}` });
       }
       const session = await resp.json();
-      const messages = (session.session_data?.turns || []).map(t => ({
-        role: t.role || (t.type === 'user' ? 'user' : 'assistant'),
-        content: t.text || t.content || '',
-      }));
+      const messages = [];
+      for (const t of (session.session_data?.turns || [])) {
+        if (t.user_message && t.user_message.text) {
+          messages.push({ role: 'user', content: t.user_message.text });
+        }
+        if (t.assistant_message && t.assistant_message.text) {
+          messages.push({ role: 'assistant', content: t.assistant_message.text });
+        }
+      }
       return res.json({
         run_id: session.workflow_run_id,
         revision: session.revision,
