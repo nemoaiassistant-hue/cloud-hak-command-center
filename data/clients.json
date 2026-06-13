@@ -122,13 +122,15 @@
         "aeo": true,
         "ads": true,
         "automation": true,
-        "crm": true
+        "crm": true,
+        "voice-agents": true
       },
       "customPricing": {},
       "status": "active",
-      "mrr": 0,
+      "mrr": 2947,
       "since": "Feb 2026",
-      "locId": "09IvUpMsLtP5pFni6mNK"
+      "locId": "09IvUpMsLtP5pFni6mNK",
+      "dograhAgentId": 7
     }
   ],
   "demos": []
