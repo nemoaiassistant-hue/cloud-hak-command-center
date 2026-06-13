@@ -1107,7 +1107,29 @@ function renderOverview() {
         <div class="stat-change neutral">No at-risk clients</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+
+    <!-- ===== DEMO LAB ===== -->
+    <div class="panel" style="margin-top:24px;border:1px solid rgba(88,101,242,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0">🧪 Demo Lab</h3>
+        <button onclick="showDemoForm()" style="background:var(--discord);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">+ New Demo</button>
+      </div>
+      <p style="color:var(--gray);font-size:13px;margin:0 0 16px">Create AI agent demos for prospects. No sub-account needed — just enter their website.</p>
+      <div id="demo-list">Loading demos...</div>
+      <div id="demo-form" style="display:none;margin-top:16px;padding:16px;background:var(--dark);border-radius:12px">
+        <div style="display:grid;gap:12px">
+          <input id="demo-url" placeholder="Business website (e.g. dentist-brighton.co.uk)" style="background:var(--light-gray);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:15px;width:100%">
+          <input id="demo-name" placeholder="Business name (optional)" style="background:var(--light-gray);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:15px;width:100%">
+          <div style="display:flex;gap:8px">
+            <button onclick="createDemo()" id="demo-create-btn" style="background:var(--green);color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1">Create Demo Agent</button>
+            <button onclick="hideDemoForm()" style="background:var(--light-gray);color:var(--gray);border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px">Cancel</button>
+          </div>
+        </div>
+        <div id="demo-status" style="margin-top:12px;font-size:13px"></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
       <div class="panel">
         <h3>Revenue by Service</h3>
         <div class="chart-bars">${chartHtml}</div>
@@ -1118,6 +1140,127 @@ function renderOverview() {
       </div>
     </div>
   `;
+  loadDemos();
+}
+
+// ===== DEMO LAB =====
+let demoList = [];
+
+async function loadDemos() {
+  try {
+    const resp = await fetch('https://cloud-hak-command-center.vercel.app/api/demos');
+    if (!resp.ok) throw new Error('Failed to load');
+    demoList = await resp.json();
+  } catch (e) {
+    demoList = [];
+  }
+  renderDemos();
+}
+
+function renderDemos() {
+  const container = document.getElementById('demo-list');
+  if (!container) return;
+
+  if (demoList.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:14px">No demos yet. Click "+ New Demo" to create one for a prospect.</div>';
+    return;
+  }
+
+  container.innerHTML = demoList.map(d => {
+    const demoUrl = `https://cloud-hak-command-center.vercel.app/demo.html?agent=${d.agentId}`;
+    const date = new Date(d.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--dark);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--green)">
+        <div>
+          <div style="font-weight:600;font-size:15px">${d.business}</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:2px">${d.type === 'voice' ? '🎙️ Voice' : '💬 Chat'} · Created ${date}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="${demoUrl}" target="_blank" style="background:var(--discord);color:white;text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600">Open Demo →</a>
+          <button onclick="copyDemoLink('${demoUrl}')" style="background:var(--light-gray);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">📋 Copy</button>
+          <button onclick="deleteDemo(${d.agentId})" style="background:transparent;color:#f04747;border:1px solid #f0474755;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showDemoForm() {
+  document.getElementById('demo-form').style.display = 'block';
+  document.getElementById('demo-url').focus();
+}
+function hideDemoForm() {
+  document.getElementById('demo-form').style.display = 'none';
+  document.getElementById('demo-url').value = '';
+  document.getElementById('demo-name').value = '';
+  document.getElementById('demo-status').innerHTML = '';
+}
+
+async function createDemo() {
+  const url = document.getElementById('demo-url').value.trim();
+  const name = document.getElementById('demo-name').value.trim();
+  const statusEl = document.getElementById('demo-status');
+  const btn = document.getElementById('demo-create-btn');
+
+  if (!url) { statusEl.innerHTML = '<span style="color:#f04747">Please enter a website URL</span>'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+  statusEl.innerHTML = '⏳ Scraping website, generating persona, creating agent...';
+
+  try {
+    const resp = await fetch('https://cloud-hak-command-center.vercel.app/api/demos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ website_url: url, business_name: name, agent_type: 'chat' }),
+    });
+    const result = await resp.json();
+
+    if (!resp.ok) {
+      statusEl.innerHTML = `<span style="color:#f04747">❌ ${result.error || 'Failed'}</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Create Demo Agent';
+      return;
+    }
+
+    statusEl.innerHTML = `<span style="color:var(--green)">✅ Agent created! Demo link ready.</span>`;
+    hideDemoForm();
+    await loadDemos();
+
+    // Show the link prominently
+    const container = document.getElementById('demo-list');
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:var(--green);color:white;padding:16px;border-radius:10px;margin-bottom:12px;animation:fadeIn .3s';
+    banner.innerHTML = `<div style="font-weight:700;margin-bottom:4px">✅ ${result.business} demo ready!</div>
+      <div style="font-size:13px;opacity:.9">Share this link: <a href="${result.demo_url}" target="_blank" style="color:white;text-decoration:underline">${result.demo_url}</a></div>
+      <div style="margin-top:4px;font-size:12px;opacity:.8">"${result.greeting?.substring(0, 80) || ''}"</div>`;
+    container.insertBefore(banner, container.firstChild);
+
+    setTimeout(() => banner.remove(), 10000);
+  } catch (e) {
+    statusEl.innerHTML = `<span style="color:#f04747">❌ ${e.message}</span>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Create Demo Agent';
+}
+
+function copyDemoLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    // Brief feedback
+  }).catch(() => {});
+}
+
+async function deleteDemo(agentId) {
+  if (!confirm('Delete this demo? The agent will remain on Dograh but disappear from the list.')) return;
+  try {
+    await fetch('https://cloud-hak-command-center.vercel.app/api/demos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', agent_id: agentId }),
+    });
+    await loadDemos();
+  } catch (e) { /* silent */ }
 }
 
 // ===== RENDER SERVICE PAGE =====
