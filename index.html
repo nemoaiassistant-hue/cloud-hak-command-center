@@ -1305,7 +1305,7 @@ function copyDemoLink(url) {
 }
 
 async function deleteDemo(agentId) {
-  if (!confirm('Delete this demo? The agent will remain on Dograh but disappear from the list.')) return;
+  if (!confirm('Delete this demo? The AI agent will be permanently removed.')) return;
   try {
     await fetch('https://cloud-hak-command-center.vercel.app/api/demos', {
       method: 'POST',

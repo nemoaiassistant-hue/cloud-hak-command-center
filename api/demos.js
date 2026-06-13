@@ -174,9 +174,22 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { action } = req.body;
 
-      // DELETE demo
+      // DELETE demo — removes from clients.json AND deletes workflow from Dograh
       if (action === 'delete') {
         const { agent_id } = req.body;
+        
+        // Try to delete from Dograh first (best effort — don't fail if it errors)
+        try {
+          const token = await dograhLogin();
+          await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (e) {
+          // Non-fatal — still remove from list
+        }
+        
+        // Remove from clients.json
         const { parsed, sha } = await fetchClientsJson();
         if (!parsed.demos) parsed.demos = [];
         parsed.demos = parsed.demos.filter(d => d.agentId !== agent_id);
