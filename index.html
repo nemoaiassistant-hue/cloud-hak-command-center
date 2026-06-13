@@ -415,6 +415,10 @@ tr:hover{background:var(--border)}
     <div class="nav-item active" data-view="overview" onclick="switchView('overview')">
       <span class="nav-icon">🏠</span> Overview
     </div>
+    <div class="nav-item" data-view="demo-lab" onclick="switchView('demo-lab')">
+      <span class="nav-icon">🧪</span> Demo Lab
+      <span class="nav-badge" id="badge-demo-lab">0</span>
+    </div>
 
     <div class="nav-section-label">Services</div>
     <div class="nav-item" data-view="websites" onclick="switchView('websites')">
@@ -507,6 +511,9 @@ tr:hover{background:var(--border)}
 
     <!-- ===== OVERVIEW (populated by renderOverview/renderClientOverview) ===== -->
     <div class="view active" id="view-overview"></div>
+
+    <!-- ===== DEMO LAB ===== -->
+    <div class="view" id="view-demo-lab"></div>
 
     <!-- ===== SERVICE PAGES (shared template, populated by JS) ===== -->
     <div class="view" id="view-websites"></div>
@@ -1036,6 +1043,10 @@ function switchView(viewId) {
       document.getElementById('breadcrumb').textContent = 'Cloud Hak / Overview';
       document.getElementById('page-title').textContent = 'Overview';
     }
+  } else if (viewId === 'demo-lab') {
+    renderDemoLab();
+    document.getElementById('breadcrumb').textContent = 'Cloud Hak / Demo Lab';
+    document.getElementById('page-title').textContent = '🧪 Demo Lab';
   } else {
     const titles = { clients:'Clients', reports:'Reports', settings:'Settings' };
     document.getElementById('breadcrumb').textContent = `Cloud Hak / ${titles[viewId] || viewId}`;
@@ -1108,15 +1119,56 @@ function renderOverview() {
       </div>
     </div>
 
-    <!-- ===== DEMO LAB ===== -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
+      <div class="panel">
+        <h3>Revenue by Service</h3>
+        <div class="chart-bars">${chartHtml}</div>
+      </div>
+      <div class="panel">
+        <h3>Recent Activity</h3>
+        <div>${activityHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== DEMO LAB VIEW =====
+function renderDemoLab() {
+  const view = document.getElementById('view-demo-lab');
+  view.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Active Demos</div>
+        <div class="stat-value" id="dl-stat-count">0</div>
+        <div class="stat-change neutral">Prospect demos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Created</div>
+        <div class="stat-value" id="dl-stat-total">0</div>
+        <div class="stat-change neutral">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Converted</div>
+        <div class="stat-value" style="color:var(--green)">0</div>
+        <div class="stat-change up">To clients</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Demo Success Rate</div>
+        <div class="stat-value">—</div>
+        <div class="stat-change neutral">Track conversions</div>
+      </div>
+    </div>
+
     <div class="panel" style="margin-top:24px;border:1px solid rgba(88,101,242,.3)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3 style="margin:0">🧪 Demo Lab</h3>
-        <button onclick="showDemoForm()" style="background:var(--discord);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">+ New Demo</button>
+        <div>
+          <h3 style="margin:0">🧪 Demo Lab</h3>
+          <p style="color:var(--gray);font-size:13px;margin:8px 0 0">Create AI agent demos for prospects. No sub-account needed — just enter their website.</p>
+        </div>
+        <button onclick="showDemoForm()" style="background:var(--discord);color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap">+ New Demo</button>
       </div>
-      <p style="color:var(--gray);font-size:13px;margin:0 0 16px">Create AI agent demos for prospects. No sub-account needed — just enter their website.</p>
-      <div id="demo-list">Loading demos...</div>
-      <div id="demo-form" style="display:none;margin-top:16px;padding:16px;background:var(--dark);border-radius:12px">
+
+      <div id="demo-form" style="display:none;margin-bottom:16px;padding:16px;background:var(--dark);border-radius:12px">
         <div style="display:grid;gap:12px">
           <input id="demo-url" placeholder="Business website (e.g. dentist-brighton.co.uk)" style="background:var(--light-gray);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:15px;width:100%">
           <input id="demo-name" placeholder="Business name (optional)" style="background:var(--light-gray);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:15px;width:100%">
@@ -1127,17 +1179,8 @@ function renderOverview() {
         </div>
         <div id="demo-status" style="margin-top:12px;font-size:13px"></div>
       </div>
-    </div>
 
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
-      <div class="panel">
-        <h3>Revenue by Service</h3>
-        <div class="chart-bars">${chartHtml}</div>
-      </div>
-      <div class="panel">
-        <h3>Recent Activity</h3>
-        <div>${activityHtml}</div>
-      </div>
+      <div id="demo-list">Loading demos...</div>
     </div>
   `;
   loadDemos();
@@ -1160,6 +1203,16 @@ async function loadDemos() {
 function renderDemos() {
   const container = document.getElementById('demo-list');
   if (!container) return;
+
+  // Update nav badge
+  const badge = document.getElementById('badge-demo-lab');
+  if (badge) badge.textContent = demoList.length;
+
+  // Update stat cards
+  const countEl = document.getElementById('dl-stat-count');
+  const totalEl = document.getElementById('dl-stat-total');
+  if (countEl) countEl.textContent = demoList.length;
+  if (totalEl) totalEl.textContent = demoList.length;
 
   if (demoList.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:14px">No demos yet. Click "+ New Demo" to create one for a prospect.</div>';
