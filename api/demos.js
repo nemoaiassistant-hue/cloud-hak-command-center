@@ -178,12 +178,13 @@ export default async function handler(req, res) {
       if (action === 'delete') {
         const { agent_id } = req.body;
         
-        // Try to delete from Dograh first (best effort — don't fail if it errors)
+        // Archive workflow on Dograh (no DELETE endpoint exists, archive instead)
         try {
           const token = await dograhLogin();
-          await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
+          await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}/status`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'archived' }),
           });
         } catch (e) {
           // Non-fatal — still remove from list
