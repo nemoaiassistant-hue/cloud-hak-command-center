@@ -16,6 +16,13 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .header-badge { margin-left:auto; background:rgba(34,197,94,0.15); color:#22c55e; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; }
 .header-badge::before { content:''; width:7px; height:7px; border-radius:50%; background:#22c55e; }
 
+/* Voice call button */
+.voice-btn { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; margin-left:8px; transition:transform 0.15s,opacity 0.15s; box-shadow:0 2px 8px rgba(34,197,94,0.3); }
+.voice-btn:active { transform:scale(0.92); }
+.voice-btn.loading { opacity:0.5; animation:pulse 1.5s infinite; }
+.voice-btn.active { background:linear-gradient(135deg,#ef4444,#dc2626); box-shadow:0 2px 12px rgba(239,68,68,0.4); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+
 /* Chat area */
 .chat-area { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
 .msg { max-width:85%; padding:13px 17px; border-radius:18px; font-size:15px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.3s ease; }
@@ -54,6 +61,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
     <p id="agent-desc">Loading...</p>
   </div>
   <div class="header-badge">Online</div>
+  <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Start voice call">📞</button>
 </div>
 
 <div class="chat-area" id="chat"></div>
@@ -78,6 +86,74 @@ let sending = false;
 const chat = document.getElementById('chat');
 const input = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
+const voiceBtn = document.getElementById('voice-btn');
+
+// ===== Voice Call =====
+let voiceLoaded = false;
+let voiceActive = false;
+
+async function toggleVoice() {
+  if (voiceActive) {
+    // End call — reload to clean up WebRTC
+    addMsg('system', 'Voice call ended.');
+    if (window.DograhWidget && window.DograhWidget.endCall) {
+      window.DograhWidget.endCall();
+    }
+    voiceActive = false;
+    voiceBtn.classList.remove('active');
+    voiceBtn.textContent = '📞';
+    return;
+  }
+
+  voiceBtn.classList.add('loading');
+
+  try {
+    // Get embed token + widget URL from our API
+    const resp = await fetch(`/api/embed?workflow_id=${WF_ID}`);
+    if (!resp.ok) throw new Error('Voice not available');
+    const data = await resp.json();
+
+    if (!data.token) throw new Error('No embed token');
+
+    addMsg('system', '🎙️ Starting voice call... Allow microphone access when prompted.');
+
+    // Load the Dograh widget script
+    const existing = document.getElementById('dograh-widget');
+    if (existing) existing.remove();
+
+    const script = document.createElement('script');
+    script.id = 'dograh-widget';
+    script.src = data.widgetUrl;
+    script.async = true;
+    script.onload = () => {
+      voiceLoaded = true;
+      voiceActive = true;
+      voiceBtn.classList.remove('loading');
+      voiceBtn.classList.add('active');
+      voiceBtn.textContent = '🔇';
+      addMsg('system', '📞 Voice call active — speak naturally!');
+    };
+    script.onerror = () => {
+      voiceBtn.classList.remove('loading');
+      addMsg('system', '⚠️ Voice server unavailable. Try again later.');
+    };
+    document.body.appendChild(script);
+
+    // Fallback timeout
+    setTimeout(() => {
+      if (voiceBtn.classList.contains('loading')) {
+        voiceBtn.classList.remove('loading');
+        voiceActive = true;
+        voiceBtn.classList.add('active');
+        voiceBtn.textContent = '🔇';
+      }
+    }, 5000);
+
+  } catch (e) {
+    voiceBtn.classList.remove('loading');
+    addMsg('system', `⚠️ Voice unavailable: ${e.message}`);
+  }
+}
 
 // Auto-resize textarea
 input.addEventListener('input', () => {
