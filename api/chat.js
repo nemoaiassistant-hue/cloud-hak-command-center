@@ -279,79 +279,18 @@ Generate a JSON object with these exact keys:
       const finalBusinessName = agentConfig.business_name || business_name || 'New Business';
       const agentName = `${finalBusinessName} AI Assistant`;
 
-      // Step 3: Construct workflow definition
+      // Step 3: Construct workflow definition (MUST use string IDs to match SDK format)
       const workflowDef = {
         nodes: [
-          {
-            id: 0,
-            type: 'globalNode',
-            data: {
-              prompt: agentConfig.global_prompt,
-              name: 'Global Node',
-              allow_interrupt: false,
-              invalid: false,
-              is_static: false,
-            },
-          },
-          {
-            id: 1,
-            type: 'startCall',
-            data: {
-              prompt: `Greet the visitor warmly. Tell them your name and that you're the AI assistant for ${finalBusinessName}. Ask how you can help them today. ${isVoice ? 'Keep it short and conversational for voice.' : ''}`,
-              name: 'Start',
-              greeting: agentConfig.greeting,
-              greeting_type: 'text',
-              allow_interrupt: isVoice,
-              add_global_prompt: true,
-              invalid: false,
-              is_start: true,
-              is_static: false,
-              wait_for_user_response: false,
-              detect_voicemail: false,
-              delayed_start: false,
-              selected_through_edge: false,
-              hovered_through_edge: false,
-            },
-          },
-          {
-            id: 2,
-            type: 'agentNode',
-            data: {
-              prompt: agentConfig.main_prompt,
-              name: 'Main Conversation',
-              allow_interrupt: false,
-              add_global_prompt: true,
-              invalid: false,
-              extraction_enabled: false,
-              extraction_prompt: '',
-              extraction_variables: [],
-              selected_through_edge: false,
-              hovered_through_edge: false,
-            },
-          },
-          {
-            id: 4,
-            type: 'endCall',
-            data: {
-              prompt: 'The conversation is complete. Say a brief polite goodbye (6-8 words) and end naturally.',
-              name: 'End Call',
-              allow_interrupt: false,
-              add_global_prompt: false,
-              invalid: false,
-              is_end: true,
-              is_static: false,
-              extraction_enabled: false,
-              extraction_prompt: '',
-              extraction_variables: [],
-              selected_through_edge: false,
-              hovered_through_edge: false,
-            },
-          },
+          { id: "1", type: "startCall", position: { x: 0, y: 0 }, data: { name: "Start", greeting_type: "text", prompt: `Greet the visitor warmly. Tell them your name and that you're the AI assistant for ${finalBusinessName}. Ask how you can help them today. ${isVoice ? 'Keep it short and conversational for voice.' : ''}`, greeting: agentConfig.greeting, allow_interrupt: isVoice, add_global_prompt: true, delayed_start: false, delayed_start_duration: 2, extraction_enabled: false, pre_call_fetch_enabled: false } },
+          { id: "2", type: "agentNode", position: { x: 400, y: 200 }, data: { name: "Main Conversation", prompt: agentConfig.main_prompt, allow_interrupt: true, add_global_prompt: true, extraction_enabled: false } },
+          { id: "3", type: "globalNode", position: { x: 0, y: 0 }, data: { name: "Global Node", prompt: agentConfig.global_prompt } },
+          { id: "4", type: "endCall", position: { x: 400, y: 200 }, data: { name: "End Call", prompt: "The conversation is complete. Say a brief polite goodbye and end naturally.", add_global_prompt: false, extraction_enabled: false } },
         ],
         edges: [
-          { id: 'e1-2', source: 1, target: 2, sourceHandle: null, targetHandle: null, data: { label: 'Continue to main' } },
-          { id: 'e1-4', source: 1, target: 4, sourceHandle: null, targetHandle: null, data: { label: 'End immediately' } },
-          { id: 'e2-4', source: 2, target: 4, sourceHandle: null, targetHandle: null, data: { label: 'End conversation' } },
+          { id: "1-2", source: "1", target: "2", data: { label: "Continue to main", condition: "Move to the main conversation after greeting and understanding the visitor's needs." } },
+          { id: "1-4", source: "1", target: "4", data: { label: "End immediately", condition: "End if the visitor does not want to continue." } },
+          { id: "2-4", source: "2", target: "4", data: { label: "End conversation", condition: "End when the visitor's questions are fully answered." } },
         ],
         viewport: { zoom: 0.8, x: 100, y: 50 },
       };
@@ -396,7 +335,38 @@ Generate a JSON object with these exact keys:
         // Publishing may need a separate step - that's OK
       }
 
-      // Step 6: Map to client in clients.json
+      // Step 6: Save to demos array in clients.json (if no client_name specified)
+      if (!client_name) {
+        try {
+          const ghToken = process.env.GH_TOKEN;
+          const ghResp = await fetch(`https://api.github.com/repos/nemoaiassistant-hue/cloud-hak-command-center/contents/data/clients.json`, {
+            headers: { Authorization: `token ${ghToken}`, Accept: 'application/vnd.github.v3+json' },
+          });
+          const ghData = await ghResp.json();
+          const fileContent = JSON.parse(Buffer.from(ghData.content, 'base64').toString('utf8'));
+          if (!fileContent.demos) fileContent.demos = [];
+          fileContent.demos.push({
+            agentId: wfId,
+            business: finalBusinessName,
+            website: website_url,
+            type: isVoice ? 'voice' : 'chat',
+            created: new Date().toISOString(),
+          });
+          await fetch(`https://api.github.com/repos/nemoaiassistant-hue/cloud-hak-command-center/contents/data/clients.json`, {
+            method: 'PUT',
+            headers: { Authorization: `token ${ghToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `Add demo: ${finalBusinessName}`,
+              content: Buffer.from(JSON.stringify(fileContent, null, 2)).toString('base64'),
+              sha: ghData.sha,
+            }),
+          });
+        } catch (e) {
+          // Non-fatal — agent is created, just won't show in Demo Lab
+        }
+      }
+
+      // Step 7: Map to existing client if specified
       if (client_name) {
         const client = data.clients.find(c =>
           c.name.toLowerCase().includes(client_name.toLowerCase()) ||
