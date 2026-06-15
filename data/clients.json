@@ -133,5 +133,15 @@
       "dograhAgentId": 9
     }
   ],
-  "demos": []
+  "demos": [
+    {
+      "business": "Cloud Hak Ltd",
+      "website": "cloud-hak.com",
+      "agentId": 15,
+      "agentName": "Cloud Hak Ltd AI Assistant",
+      "type": "chat",
+      "created": "2026-06-15T21:11:01.316Z",
+      "status": "demo"
+    }
+  ]
 }
