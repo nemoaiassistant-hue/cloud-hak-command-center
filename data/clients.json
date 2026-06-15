@@ -7,49 +7,49 @@
   "services": [
     {
       "id": "websites",
-      "icon": "🌐",
+      "icon": "\ud83c\udf10",
       "name": "Web Design",
       "price": 497
     },
     {
       "id": "voice_agents",
-      "icon": "🎙️",
+      "icon": "\ud83c\udf99\ufe0f",
       "name": "AI Voice Agents",
       "price": 500
     },
     {
       "id": "chatbots",
-      "icon": "💬",
+      "icon": "\ud83d\udcac",
       "name": "AI Chatbots",
       "price": 300
     },
     {
       "id": "seo",
-      "icon": "🔍",
+      "icon": "\ud83d\udd0d",
       "name": "SEO",
       "price": 400
     },
     {
       "id": "aeo",
-      "icon": "🤖",
+      "icon": "\ud83e\udd16",
       "name": "AEO",
       "price": 350
     },
     {
       "id": "ads",
-      "icon": "📣",
+      "icon": "\ud83d\udce3",
       "name": "Google & Social Ads",
       "price": 400
     },
     {
       "id": "automation",
-      "icon": "⚙️",
+      "icon": "\u2699\ufe0f",
       "name": "Automation",
       "price": 300
     },
     {
       "id": "crm",
-      "icon": "📋",
+      "icon": "\ud83d\udccb",
       "name": "CRM",
       "price": 200
     }
@@ -57,10 +57,10 @@
   "clients": [
     {
       "name": "Airway Clinic",
-      "sub": "Sleep Clinic · Stockholm, SE",
+      "sub": "Sleep Clinic \u00b7 Stockholm, SE",
       "contact": "Sia Maani",
       "email": "info@airwayclinic.se",
-      "phone": "—",
+      "phone": "\u2014",
       "city": "Stockholm, Sweden",
       "website": "airwayclinic.se",
       "services": {
@@ -82,7 +82,7 @@
     },
     {
       "name": "Altri Medical",
-      "sub": "Medical · Altrincham, UK",
+      "sub": "Medical \u00b7 Altrincham, UK",
       "contact": "Nima Hakimmaani",
       "email": "altrimedical@gmail.com",
       "phone": "+441****7727",
@@ -108,7 +108,7 @@
     },
     {
       "name": "Cloud Hak AI",
-      "sub": "AI Agency · Hove, UK",
+      "sub": "AI Agency \u00b7 Hove, UK",
       "contact": "Nima Hakimmaani",
       "email": "info@cloud-hak.com",
       "phone": "+447****0042",
@@ -133,15 +133,5 @@
       "dograhAgentId": 9
     }
   ],
-  "demos": [
-    {
-      "business": "Cloud Hak Ltd",
-      "website": "cloud-hak.com",
-      "agentId": 15,
-      "agentName": "Cloud Hak Ltd AI Assistant",
-      "type": "chat",
-      "created": "2026-06-15T21:11:01.316Z",
-      "status": "demo"
-    }
-  ]
+  "demos": []
 }
