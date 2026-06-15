@@ -133,15 +133,5 @@
       "dograhAgentId": 9
     }
   ],
-  "demos": [
-    {
-      "business": "cloud-hak",
-      "website": "https://cloud-hak.com/",
-      "agentId": 16,
-      "agentName": "cloud-hak AI Assistant",
-      "type": "chat",
-      "created": "2026-06-15T21:20:38.460Z",
-      "status": "demo"
-    }
-  ]
+  "demos": []
 }
