@@ -135,13 +135,6 @@
   ],
   "demos": [
     {
-      "agentId": 11,
-      "business": "Broadway Dental Boutique",
-      "website": "https://broadwaydentalb.co.uk/",
-      "type": "chat",
-      "created": "2026-06-13T10:58:55.603Z"
-    },
-    {
       "business": "broadwaydentalb",
       "website": "https://broadwaydentalb.co.uk/",
       "agentId": 12,
