@@ -7,49 +7,49 @@
   "services": [
     {
       "id": "websites",
-      "icon": "\ud83c\udf10",
+      "icon": "🌐",
       "name": "Web Design",
       "price": 497
     },
     {
       "id": "voice_agents",
-      "icon": "\ud83c\udf99\ufe0f",
+      "icon": "🎙️",
       "name": "AI Voice Agents",
       "price": 500
     },
     {
       "id": "chatbots",
-      "icon": "\ud83d\udcac",
+      "icon": "💬",
       "name": "AI Chatbots",
       "price": 300
     },
     {
       "id": "seo",
-      "icon": "\ud83d\udd0d",
+      "icon": "🔍",
       "name": "SEO",
       "price": 400
     },
     {
       "id": "aeo",
-      "icon": "\ud83e\udd16",
+      "icon": "🤖",
       "name": "AEO",
       "price": 350
     },
     {
       "id": "ads",
-      "icon": "\ud83d\udce3",
+      "icon": "📣",
       "name": "Google & Social Ads",
       "price": 400
     },
     {
       "id": "automation",
-      "icon": "\u2699\ufe0f",
+      "icon": "⚙️",
       "name": "Automation",
       "price": 300
     },
     {
       "id": "crm",
-      "icon": "\ud83d\udccb",
+      "icon": "📋",
       "name": "CRM",
       "price": 200
     }
@@ -57,10 +57,10 @@
   "clients": [
     {
       "name": "Airway Clinic",
-      "sub": "Sleep Clinic \u00b7 Stockholm, SE",
+      "sub": "Sleep Clinic · Stockholm, SE",
       "contact": "Sia Maani",
       "email": "info@airwayclinic.se",
-      "phone": "\u2014",
+      "phone": "—",
       "city": "Stockholm, Sweden",
       "website": "airwayclinic.se",
       "services": {
@@ -82,7 +82,7 @@
     },
     {
       "name": "Altri Medical",
-      "sub": "Medical \u00b7 Altrincham, UK",
+      "sub": "Medical · Altrincham, UK",
       "contact": "Nima Hakimmaani",
       "email": "altrimedical@gmail.com",
       "phone": "+441****7727",
@@ -108,7 +108,7 @@
     },
     {
       "name": "Cloud Hak AI",
-      "sub": "AI Agency \u00b7 Hove, UK",
+      "sub": "AI Agency · Hove, UK",
       "contact": "Nima Hakimmaani",
       "email": "info@cloud-hak.com",
       "phone": "+447****0042",
@@ -133,5 +133,21 @@
       "dograhAgentId": 9
     }
   ],
-  "demos": []
+  "demos": [
+    {
+      "business": "cloud-hak",
+      "website": "cloud-hak.com",
+      "agentId": 18,
+      "agentName": "cloud-hak AI Assistant",
+      "type": "chat",
+      "created": "2026-06-15T21:55:37.624Z",
+      "status": "demo",
+      "greeting": "Hi! I'm from Cloud Hak. How can I help your business grow today?",
+      "global_prompt": "You are a representative of Cloud Hak, an AI-powered growth agency for local businesses. You help visitors understand services and guide them toward booking a consultation. Your tone should be warm, professional, and knowledgeable about their services. NEVER write more than 3 sentences in a single response. Never use bullet points or lists. Always provide concise, helpful information followed by a question.",
+      "main_prompt": "Cloud Hak provides modern AI solutions for local businesses across the UK. Based in Brighton & Hove, they offer web design and development starting at £1,500 for single-page sites, AI chatbots that answer questions and capture leads 24/7, and AI voice agents that handle inbound and outbound calls. Their services include SEO, AEO (Answer Engine Optimisation), Google & Social Ads, automation, and CRM setup using platforms like GoHighLevel, WordPress, and Zapier. Pricing for monthly plans starts at £97/month with setup fees ranging from £150-£500, and one-off projects like website builds range from £150-£500. They operate Monday-Friday 9am-6pm BST and respond to inquiries within one business day. You can reach them at 07888 873694 or info@cloud-hak.com. They offer fixed-price proposals with no long contracts and focus on measurable results like calls booked and revenue generated. Keep every response to 1-3 sentences. No lists. Always end with a question.",
+      "start_prompt": "Greet the visitor warmly, mention Cloud Hak, and ask what they need help with.",
+      "scraped_details": "Cloud Hak is a Brighton & Hove-based agency providing AI-powered growth solutions for UK businesses. Services include Web Design (£1,500+), AI Chatbots, AI Voice Agents, SEO, AEO, Google & Social Ads, Automation, CRM Setup, and AI Workforce (from £397/mo). Monthly plans: Starter (£97/mo + £150 setup), Growth (£197/mo + £350 setup), Scale (£297/mo + £500 setup). Open Mon-Fri 9am-6pm BST. Contact: 07888 873694 or info@cloud-hak.com. Response time ≤1 business day. No long contracts, fixed pricing. Currently accepting new clients for Q2 2026.",
+      "raw_scrape": "=== HOMEPAGE ===\nCloud Hak | AI-powered growth for local business Accepting new clients · Q2 2026 Base Brighton &amp; Hove · Reply ≤ 1 biz day · Open 04 / 12 open Cloud Hak 07888 873694 Cloud Hak · Brighton &amp; Hove Modern AI solutions for local business. We help local businesses grow with intelligent websites, AI chatbots, voice agents, and digital automation — all under one roof. Start a project See what we do Based Brighton &amp; Hove Working UK-wide Response ≤ 1 biz day cloud-hak — studio.sh $ ls services/ 01 &nbsp;&nbsp;web-design&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 02 &nbsp;&nbsp;ai-chatbots&nbsp;&nbsp;&nbsp;&nbsp; ● ready 03 &nbsp;&nbsp;ai-voice&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 04 &nbsp;&nbsp;seo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 05 &nbsp;&nbsp;aeo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 06 &nbsp;&nbsp;ads&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 07 &nbsp;&nbsp;automation&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready 08 &nbsp;&nbsp;crm-setup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ● ready $ status --slots Quarter Q2 2026 Open 04 / 12 SLA ≤ 1 business day Senior 100% Web Design · AI Chatbots · AI Voice · SEO · AEO · Ads · Automation · CRM · ✦ AI Workforce What we do We build the digital engine that brings customers to your door. Cloud Hak helps local businesses turn attention into bookings, calls, and revenue. We combine clean websites, local search, AI assistants, voice agents, and automation into one practical growth system built around how your customers actually buy. Services Everything a local business needs to grow online From your first website to a fully automated lead pipeline, we handle it all. 01 — Web Design &amp; Development Fast, mobile-first websites that convert visitors into customers. No templates, no bloat. WordPress GoHighLevel Static 02 — AI Chatbots A 24/7 assistant on your website that answers questions, qualifies leads, and books appointments while you sleep. Website chat WhatsApp Custom trained 03 — AI Voice Agents Never miss a call again. AI answers, qualifies, and routes callers to the right place. Inbound Outbound CRM-routed 04 — SEO Get found on Google when local customers search for what you sell. We focus on calls and bookings, not vanity metrics. Local SEO Google Business Technical 05 — AEO (Answer Engine Optimisation) Make your business the answer AI assistants quote. Optimise for ChatGPT, Gemini, and voice search results. AI citations Structured data FAQ schema 06 — Google &amp; Social Ads Paid campaigns that actually pay for themselves. We track real revenue, not just clicks. Google Ads Meta Ads Retargeting 07 — Automation Connect your tools so leads stop falling through the cracks. Forms, calendars, CRM, and ads all talking to each other. Zapier GHL Workflows 08 — CRM Setup &amp; Management Get a CRM that actually works for your business. We set up, customise, and manage your customer relationship system so nothing falls through the cracks. GoHighLevel Pipelines Reporting 09 — ✦ AI Workforce — Build your AI team Build a team of AI workers that run your business 24/7 — content, follow-ups, reviews, reports and customer chats. Done for you. From £397/mo. From £397/mo 6 AI workers 7-day setup Discovery ≤ 15 min Proposal ≤ 3 biz days Senior 100% Our approach Listen first. Then build what actually moves the needle. No long contracts, no jargon, no offshore hand-offs. One team, one plan, measurable results. 01_discover Free 15-minute chat We learn about your business, your customers, and where you're losing them. ~15 min call 02_plan Written proposal ≤ 3 biz days Scope, timeline, fixed price. No surprises. ≤ 3 biz days 03_build Senior hands on work The person you spoke to is the person doing the work. senior · in-house 04_grow Measure what matters Calls booked, leads generated, revenue grown. Not impressions. revenue, not vanity Results What our clients say \"Cloud Hak built our website and set up the chatbot in under two weeks. We started getting qualified leads through the site immediately. Best investment we've made.\" \"We were invisible on Google. Now we're the top result in our area and the phone actually rings. They handle everything — we just run our business.\" \"The AI voice agent pays for itself. We stopped missing calls, bookings went up 40%, and our patients love that they can reach us 24/7.\" FAQ Common questions How much does a website cost? Our websites start from £1,500 for a single-page site and £3,000+ for multi-page builds. Every project gets a fixed-price proposal — no hourly billing, no surprises. How long does it take? Most projects launch in 2–4 weeks from approval. Simple chatbot and automation setups can be live in under a week. Do I need to be technical? Not at all. We handle everything — setup, hosting, updates, and support. You just run your business. What's an AI chatbot and do I need one? It's a 24/7 assistant on yo"
+    }
+  ]
 }
