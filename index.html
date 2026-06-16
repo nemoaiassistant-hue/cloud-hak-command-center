@@ -774,13 +774,13 @@ tr:hover{background:var(--border)}
   <div id="chat-header">
     <div class="dot"></div>
     <div>
-      <h4>Cloud Hak Assistant</h4>
-      <span>Powered by AI · Commands execute instantly</span>
+      <h4>Alfred</h4>
+      <span>Your AI Command Centre assistant</span>
     </div>
   </div>
   <div id="chat-messages">
     <div class="chat-msg assistant">
-      <div class="chat-bubble">Hi Nima! I can toggle services, set prices, and pull client info. Try: "Turn on SEO for Altri Medical" or "Give Airway a 20% discount on websites"</div>
+      <div class="chat-bubble">Good day Nima! I'm Alfred, your Command Centre assistant. I can toggle services, set prices, create demos, and pull client info. How can I help?</div>
     </div>
   </div>
   <div id="chat-input-area">
@@ -983,6 +983,18 @@ function updateContextBar() {
   } else {
     bar.classList.remove('show');
   }
+}
+
+
+function showToast(msg, type = 'success') {
+  const colors = { success: '#22c55e', error: '#ef4444', info: '#3b82f6' };
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:' + colors[type] + ';color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;font-size:14px;font-weight:600';
+  toast.textContent = icons[type] + ' ' + msg;
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; }, 3000);
+  setTimeout(function() { toast.remove(); }, 3400);
 }
 
 function updateSidebar() {
@@ -1191,7 +1203,7 @@ let demoList = [];
 
 async function loadDemos() {
   try {
-    const resp = await fetch('https://cloud-hak-command-center.vercel.app/api/demos');
+    const resp = await fetch('/api/demos?t=' + Date.now());
     if (!resp.ok) throw new Error('Failed to load');
     demoList = await resp.json();
   } catch (e) {
@@ -1220,7 +1232,7 @@ function renderDemos() {
   }
 
   container.innerHTML = demoList.map(d => {
-    const demoUrl = `https://cloud-hak-command-center.vercel.app/demo.html?agent=${d.agentId}`;
+    const demoUrl = `https://app.cloud-hak.com/demo.html?agent=${d.agentId}`;
     const date = new Date(d.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--dark);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--green)">
@@ -1230,7 +1242,8 @@ function renderDemos() {
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <a href="${demoUrl}" target="_blank" style="background:var(--discord);color:white;text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600">Open Demo →</a>
-          <button onclick="copyDemoLink('${demoUrl}')" style="background:var(--light-gray);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">📋 Copy</button>
+          <button onclick="editDemo(${d.agentId})" style="background:var(--light-gray);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">✏️ Edit</button>
+          <button onclick="copyDemoLink('${demoUrl}')" style="background:var(--light-gray);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">📋</button>
           <button onclick="deleteDemo(${d.agentId})" style="background:transparent;color:#f04747;border:1px solid #f0474755;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px">🗑</button>
         </div>
       </div>
@@ -1262,7 +1275,7 @@ async function createDemo() {
   statusEl.innerHTML = '⏳ Scraping website, generating persona, creating agent...';
 
   try {
-    const resp = await fetch('https://cloud-hak-command-center.vercel.app/api/demos', {
+    const resp = await fetch('/api/demos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ website_url: url, business_name: name, agent_type: 'chat' }),
@@ -1307,13 +1320,160 @@ function copyDemoLink(url) {
 async function deleteDemo(agentId) {
   if (!confirm('Delete this demo? The AI agent will be permanently removed.')) return;
   try {
-    await fetch('https://cloud-hak-command-center.vercel.app/api/demos', {
+    const resp = await fetch('/api/demos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', agent_id: agentId }),
     });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      showToast('Delete failed: ' + (err.error || resp.statusText), 'error');
+      return;
+    }
+    showToast('Demo deleted', 'success');
     await loadDemos();
-  } catch (e) { /* silent */ }
+  } catch (e) {
+    showToast('Network error — could not reach server', 'error');
+  }
+}
+
+// ===== DEMO EDITOR =====
+let editingDemo = null;
+
+async function editDemo(agentId) {
+  // Show loading modal
+  showModal('<div style="text-align:center;padding:40px;color:var(--gray)">Loading demo details...</div>');
+  
+  try {
+    const resp = await fetch('/api/demos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get', agent_id: agentId }),
+    });
+    if (!resp.ok) throw new Error('Failed to load demo');
+    editingDemo = await resp.json();
+    renderDemoEditor();
+  } catch (e) {
+    showModal('<div style="text-align:center;padding:40px;color:#f04747">Error: ' + e.message + '</div>');
+  }
+}
+
+function renderDemoEditor() {
+  const d = editingDemo;
+  const demoUrl = 'https://app.cloud-hak.com/demo.html?agent=' + d.agentId;
+  
+  const html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h3 style="margin:0">✏️ Edit Demo: ${d.business}</h3>
+        <a href="${demoUrl}" target="_blank" style="font-size:13px;color:var(--discord)">${demoUrl}</a>
+      </div>
+      <button onclick="closeModal()" style="background:var(--light-gray);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">✕ Close</button>
+    </div>
+
+    <div style="display:grid;gap:16px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">👋 Greeting Message</label>
+        <textarea id="edit-greeting" style="width:100%;min-height:60px;background:var(--dark);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:14px;resize:vertical" placeholder="The first message visitors see">${(d.greeting || '').replace(/</g, '&lt;')}</textarea>
+      </div>
+
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">🧠 Global Prompt (System Instructions)</label>
+        <textarea id="edit-global" style="width:100%;min-height:120px;background:var(--dark);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:13px;resize:vertical;font-family:monospace">${(d.global_prompt || '').replace(/</g, '&lt;')}</textarea>
+        <span style="font-size:11px;color:var(--gray)">Defines WHO the agent is, its role, and behavior rules</span>
+      </div>
+
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">📚 Main Prompt (Knowledge Base)</label>
+        <textarea id="edit-main" style="width:100%;min-height:250px;background:var(--dark);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:13px;resize:vertical;font-family:monospace">${(d.main_prompt || '').replace(/</g, '&lt;')}</textarea>
+        <span style="font-size:11px;color:var(--gray)">The business knowledge: services, pricing, hours, booking info</span>
+      </div>
+
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">🔑 Start Node Prompt</label>
+        <textarea id="edit-start" style="width:100%;min-height:60px;background:var(--dark);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:13px;resize:vertical;font-family:monospace">${(d.start_prompt || '').replace(/</g, '&lt;')}</textarea>
+      </div>
+
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">📋 Scraped Details (Reference)</label>
+        <textarea id="edit-scraped" style="width:100%;min-height:100px;background:var(--dark);border:1px solid var(--border);color:white;padding:12px;border-radius:8px;font-size:12px;resize:vertical;font-family:monospace;opacity:.8">${(d.scraped_details || '').replace(/</g, '&lt;')}</textarea>
+        <span style="font-size:11px;color:var(--gray)">Key facts extracted from the website — edit to add or correct info</span>
+      </div>
+
+      ${d.raw_scrape ? `
+      <details style="margin-top:4px">
+        <summary style="cursor:pointer;color:var(--gray);font-size:12px;padding:8px">📄 View raw scraped website content</summary>
+        <textarea readonly style="width:100%;min-height:200px;background:var(--dark);border:1px solid var(--border);color:var(--gray);padding:12px;border-radius:8px;font-size:11px;resize:vertical;font-family:monospace;margin-top:8px">${(d.raw_scrape || '').replace(/</g, '&lt;')}</textarea>
+      </details>
+      ` : ''}
+
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button onclick="saveDemoEdits()" id="save-demo-btn" style="background:var(--green);color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1">💾 Save & Publish to Dograh</button>
+        <button onclick="closeModal()" style="background:var(--light-gray);color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px">Cancel</button>
+      </div>
+      <div id="save-demo-status" style="font-size:13px;text-align:center"></div>
+    </div>
+  `;
+  
+  showModal(html);
+}
+
+async function saveDemoEdits() {
+  if (!editingDemo) return;
+  const btn = document.getElementById('save-demo-btn');
+  const status = document.getElementById('save-demo-status');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  status.innerHTML = '<span style="color:var(--gray)">⏳ Updating prompts and publishing to Dograh...</span>';
+
+  try {
+    const resp = await fetch('/api/demos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        agent_id: editingDemo.agentId,
+        greeting: document.getElementById('edit-greeting').value,
+        global_prompt: document.getElementById('edit-global').value,
+        main_prompt: document.getElementById('edit-main').value,
+        start_prompt: document.getElementById('edit-start').value,
+        scraped_details: document.getElementById('edit-scraped').value,
+      }),
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || 'Save failed');
+    
+    status.innerHTML = '<span style="color:var(--green)">✅ Saved and published! Changes are live.</span>';
+    btn.textContent = '✅ Done';
+    setTimeout(() => { closeModal(); loadDemos(); }, 1500);
+  } catch (e) {
+    status.innerHTML = '<span style="color:#f04747">❌ ' + e.message + '</span>';
+    btn.disabled = false;
+    btn.textContent = '💾 Save & Publish to Dograh';
+  }
+}
+
+function showModal(html) {
+  let overlay = document.getElementById('demo-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'demo-modal-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    const modal = document.createElement('div');
+    modal.id = 'demo-modal-content';
+    modal.style.cssText = 'background:var(--light-gray);border-radius:16px;padding:24px;max-width:700px;width:100%;margin:20px auto;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+    overlay.appendChild(modal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('demo-modal-content').innerHTML = html;
+  overlay.style.display = 'flex';
+}
+
+function closeModal() {
+  const overlay = document.getElementById('demo-modal-overlay');
+  if (overlay) overlay.style.display = 'none';
+  editingDemo = null;
 }
 
 // ===== RENDER SERVICE PAGE =====

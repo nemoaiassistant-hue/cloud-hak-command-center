@@ -2,3 +2,4 @@
 .DS_Store
 .vercel
 data/clients.json
+.env*

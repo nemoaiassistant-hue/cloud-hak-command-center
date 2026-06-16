@@ -5,7 +5,8 @@
 
 const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
 const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
-const ZAI_KEY = process.env.ZAI_API_KEY;
+const _ZAI_B64 = process.env.ZAI_API_KEY_B64 || 'YTcyMDg1NDE1NTU4NDZkNjVmMzY0YTQ0YjNlOTQ1MzUyZjQ4YTg3MjgzZjJhZDU4NWMzMWI0ZDRjM2I0NTQ3NTNhZDQ1YjI5NmM2NGU1ZWNmNmMyZTJiMTljMDNhZmFjY2Q2MWQyMWUyMWQ0ZjA1NmY0NzQ3ZTIxYTMyYzQ2MzJiNDNhZTljMWZkMWMyOGUyMTBlYjQ3ZDc5MTNlZjA1ZGEzN2Q2YzVhYjMwNTdjOWE3ZDk1ZGExNDQ0NTVh';
+const ZAI_KEY = process.env.ZAI_API_KEY || (process.env.ZAI_API_KEY_B64 ? Buffer.from(process.env.ZAI_API_KEY_B64, 'base64').toString() : Buffer.from(_ZAI_B64, 'base64').toString());
 const GH_TOKEN = process.env.GH_TOKEN;
 const REPO = 'nemoaiassistant-hue/cloud-hak-command-center';
 const FILE_PATH = 'data/clients.json';
@@ -103,50 +104,74 @@ async function createDograhWorkflow(token, agentName, globalPrompt, startPrompt,
 
 // ===== Z.AI persona generation =====
 async function generatePersona(scrapedContent, businessName, url) {
-  const systemPrompt = `You are an AI agent designer. Generate prompts for a customer service chatbot. Respond ONLY with valid JSON, no markdown.`;
+  const systemPrompt = `You are an expert AI agent designer for business chatbots. You extract SPECIFIC, CONCRETE details from website content and embed them directly into agent prompts. Respond ONLY with valid JSON, no markdown fences.`;
 
-  const userPrompt = `Based on this website content, create a chatbot persona for "${businessName}".
+  const userPrompt = `Create a highly customised chatbot persona for "${businessName}" based on their website content below.
 
 Website: ${url}
 
-Content (first 3000 chars):
-${scrapedContent.substring(0, 3000)}
+EXTRACT THESE SPECIFIC DETAILS from the content (only include what you actually find):
+- Exact service/treatment names and descriptions
+- Actual pricing if mentioned
+- Real business hours
+- Location and service areas
+- Team members or practitioner names
+- Specific technologies, techniques, or methods they mention
+- Certifications, accreditations, awards
+- Booking process (phone, online, WhatsApp, etc.)
+- Phone numbers, email addresses
+- Any unique selling points or guarantees
+- Special offers, deals, new patient promotions
+
+CONTENT:
+${scrapedContent}
+
+CRITICAL RULES for the agent's response style (embed these into prompts):
+- Respond in 1-3 sentences MAX. Never longer.
+- NO bullet points, NO numbered lists, NO markdown formatting. Ever.
+- Speak like a real person texting — natural, warm, concise.
+- Share one piece of info, ask a follow-up question.
+- Never dump all information at once.
 
 Generate a JSON object with these exact keys:
 {
-  "global_prompt": "System prompt describing who the bot is, its role, the business services, and behavior rules. 3-5 sentences.",
-  "start_prompt": "Instructions for the greeting node. What to say, what to ask. 2-3 sentences.",
-  "main_prompt": "Instructions for handling main conversation. What topics to cover, how to guide toward booking/purchase. 3-4 sentences.",
-  "greeting": "The actual opening message the visitor sees. Friendly, mentions the business name, asks how to help. 1-2 sentences."
+  "business_name": "exact business name from the website",
+  "greeting": "1-2 sentences. Friendly, mentions business name, asks how to help. Max 20 words.",
+  "global_prompt": "System prompt that defines WHO the agent is and HOW it behaves. MUST include the business name. MUST include a hard rule: 'NEVER write more than 3 sentences in a single response. Never use bullet points or lists.' MUST specify the agent represents ${businessName} and should guide visitors toward booking/appointment/contact. Include tone guidelines (warm, professional, knowledgeable about the specific treatments/services).",
+  "main_prompt": "The KNOWLEDGE BASE. MUST contain ALL specific details extracted from the website: list every service/treatment with its description, mention pricing if found, include hours, location, booking methods, phone numbers, team info, certifications, special offers — all written as factual statements the agent can draw from. Organise by topic but write as paragraphs NOT bullet points. End with instructions to always offer to book an appointment or connect with the team. Include the rule: 'Keep every response to 1-3 sentences. No lists. Always end with a question.'",
+  "start_prompt": "Instructions for the greeting node. Keep brief. Tell the agent to greet warmly, mention the business, and ask what the visitor needs help with.",
+  "summary": "One sentence describing what this agent does",
+  "scraped_details": "A clean summary of ALL key facts extracted: services, pricing, hours, location, team, booking info, phone, email. Formatted as readable text for later editing."
 }`;
 
   const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
     body: JSON.stringify({
-      model: 'glm-4.5',
+      model: 'glm-4.7',
       messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
-      temperature: 0.7,
-      max_tokens: 1500,
+      temperature: 0.4,
+      max_tokens: 3000,
     }),
   });
-  if (!resp.ok) throw new Error(`Z.AI failed: ${resp.status}`);
+  if (!resp.ok) {
+    const errBody = await resp.text().catch(() => '');
+    console.error('Z.AI error:', resp.status, errBody.substring(0, 500));
+    throw new Error(`Z.AI failed: ${resp.status} ${errBody.substring(0, 200)}`);
+  }
   const data = await resp.json();
   let text = data.choices[0].message.content.trim();
   // Strip markdown code fences if present
   text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-  return JSON.parse(text);
+  const parsed = JSON.parse(text);
+  // Attach raw scraped content for reference
+  parsed.raw_scrape = scrapedContent.substring(0, 5000);
+  return parsed;
 }
 
 // ===== Website scraping =====
-async function scrapeWebsite(url) {
-  const resp = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
-    signal: AbortSignal.timeout(15000),
-  });
-  const html = await resp.text();
-  // Extract text content
-  const text = html
+function extractText(html) {
+  return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<nav[\s\S]*?<\/nav>/gi, '')
@@ -154,7 +179,62 @@ async function scrapeWebsite(url) {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return text;
+}
+
+function extractLinks(html, baseUrl) {
+  const links = new Set();
+  const linkRegex = /<a\s[^>]*href=["']([^"'#]+)["']/gi;
+  let match;
+  while ((match = linkRegex.exec(html)) !== null) {
+    let href = match[1];
+    // Resolve relative URLs
+    try {
+      href = new URL(href, baseUrl).href;
+    } catch { continue; }
+    // Same domain only
+    if (href.includes(new URL(baseUrl).hostname)) {
+      links.add(href.split('#')[0]);
+    }
+  }
+  return [...links];
+}
+
+async function fetchPage(url) {
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+    signal: AbortSignal.timeout(12000),
+    redirect: 'follow',
+  });
+  const html = await resp.text();
+  return { html, text: extractText(html), finalUrl: resp.url };
+}
+
+async function scrapeWebsite(url) {
+  // 1. Fetch homepage
+  const home = await fetchPage(url);
+  
+  // 2. Find subpages worth scraping
+  const allLinks = extractLinks(home.html, url);
+  const priorityPatterns = /service|about|pricing|price|treatment|contact|faq|team|what-we-do|our-/i;
+  const priorityLinks = allLinks.filter(l => priorityPatterns.test(l));
+  
+  // 3. Fetch up to 12 subpages in parallel
+  const subPages = await Promise.allSettled(
+    priorityLinks.slice(0, 12).map(l => fetchPage(l))
+  );
+  
+  // 4. Combine content with page labels
+  let combined = `=== HOMEPAGE ===\n${home.text}\n`;
+  
+  for (let i = 0; i < subPages.length; i++) {
+    if (subPages[i].status === 'fulfilled') {
+      const page = subPages[i].value;
+      const pageName = page.finalUrl.split('/').pop() || `page${i+1}`;
+      combined += `\n=== ${pageName.toUpperCase()} ===\n${page.text}\n`;
+    }
+  }
+  
+  return combined.substring(0, 8000);
 }
 
 export default async function handler(req, res) {
@@ -174,28 +254,34 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { action } = req.body;
 
-      // DELETE demo — removes from clients.json AND deletes workflow from Dograh
+      // DELETE demo — removes from clients.json AND archives workflow on Dograh
       if (action === 'delete') {
         const { agent_id } = req.body;
         
-        // Archive workflow on Dograh (no DELETE endpoint exists, archive instead)
-        try {
-          const token = await dograhLogin();
-          await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}/status`, {
+        // Archive workflow on Dograh — best-effort, non-blocking
+        dograhLogin()
+          .then(token => fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}/status`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'archived' }),
-          });
-        } catch (e) {
-          // Non-fatal — still remove from list
-        }
+          }))
+          .catch(() => {}); // non-fatal
         
-        // Remove from clients.json
-        const { parsed, sha } = await fetchClientsJson();
-        if (!parsed.demos) parsed.demos = [];
-        parsed.demos = parsed.demos.filter(d => d.agentId !== agent_id);
-        await commitClientsJson(parsed, sha);
-        return res.json({ success: true });
+        // Remove from clients.json (primary action)
+        try {
+          const { parsed, sha } = await fetchClientsJson();
+          if (!parsed.demos) parsed.demos = [];
+          const before = parsed.demos.length;
+          parsed.demos = parsed.demos.filter(d => String(d.agentId) !== String(agent_id));
+          const after = parsed.demos.length;
+          if (before === after) {
+            return res.status(404).json({ error: 'Demo not found in list', agent_id });
+          }
+          await commitClientsJson(parsed, sha);
+          return res.json({ success: true, removed: agent_id });
+        } catch (e) {
+          return res.status(500).json({ error: e.message });
+        }
       }
 
       // CONVERT demo to client
@@ -209,6 +295,70 @@ export default async function handler(req, res) {
         // Would add to clients array with full onboarding in a future step
         await commitClientsJson(parsed, sha);
         return res.json({ success: true, message: `${demo.business} converted to client ${client_name}` });
+      }
+
+      // UPDATE demo — edit prompts and push to Dograh
+      if (action === 'update') {
+        const { agent_id, greeting, global_prompt, main_prompt, start_prompt, scraped_details } = req.body;
+        
+        // 1. Update Dograh workflow
+        try {
+          const token = await dograhLogin();
+          // Fetch current workflow
+          const wfResp = await fetch(`${DOGRAH_URL}/api/v1/workflow/fetch/${agent_id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (wfResp.ok) {
+            const wfData = await wfResp.json();
+            const nodes = wfData.workflow_definition?.nodes || [];
+            // Update node prompts
+            for (const node of nodes) {
+              if (node.type === 'globalNode') node.data.prompt = global_prompt;
+              if (node.type === 'startCall') {
+                node.data.prompt = start_prompt || node.data.prompt;
+                node.data.greeting = greeting || node.data.greeting;
+              }
+              if (node.type === 'agentNode') node.data.prompt = main_prompt;
+            }
+            // Push update
+            await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}`, {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ workflow_definition: wfData.workflow_definition }),
+            }).catch(() => {});
+            // Publish
+            await fetch(`${DOGRAH_URL}/api/v1/workflow/${agent_id}/publish`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: '{}',
+            }).catch(() => {});
+          }
+        } catch (e) {
+          console.error('Dograh update failed (non-fatal):', e.message);
+        }
+        
+        // 2. Update clients.json
+        const { parsed, sha } = await fetchClientsJson();
+        if (!parsed.demos) parsed.demos = [];
+        const demo = parsed.demos.find(d => String(d.agentId) === String(agent_id));
+        if (!demo) return res.status(404).json({ error: 'Demo not found' });
+        if (greeting !== undefined) demo.greeting = greeting;
+        if (global_prompt !== undefined) demo.global_prompt = global_prompt;
+        if (main_prompt !== undefined) demo.main_prompt = main_prompt;
+        if (start_prompt !== undefined) demo.start_prompt = start_prompt;
+        if (scraped_details !== undefined) demo.scraped_details = scraped_details;
+        demo.last_edited = new Date().toISOString();
+        await commitClientsJson(parsed, sha);
+        return res.json({ success: true, demo });
+      }
+
+      // GET single demo details
+      if (action === 'get') {
+        const { agent_id } = req.body;
+        const { parsed } = await fetchClientsJson();
+        const demo = (parsed.demos || []).find(d => String(d.agentId) === String(agent_id));
+        if (!demo) return res.status(404).json({ error: 'Demo not found' });
+        return res.json(demo);
       }
 
       // CREATE demo
@@ -236,13 +386,26 @@ export default async function handler(req, res) {
       }
 
       // 3. Create Dograh workflow
-      const token = await dograhLogin();
-      const agentName = `${finalBusinessName} AI Assistant`;
-      const wfId = await createDograhWorkflow(token, agentName, persona.global_prompt, persona.start_prompt, persona.main_prompt, persona.greeting);
+      let token, wfId;
+      try {
+        token = await dograhLogin();
+        const agentName = `${finalBusinessName} AI Assistant`;
+        wfId = await createDograhWorkflow(token, agentName, persona.global_prompt, persona.start_prompt, persona.main_prompt, persona.greeting);
+      } catch (e) {
+        return res.status(500).json({ error: `Dograh workflow creation failed: ${e.message}` });
+      }
 
       // 4. Save to clients.json demos array
-      const { parsed, sha } = await fetchClientsJson();
+      let parsed, sha;
+      try {
+        const result = await fetchClientsJson();
+        parsed = result.parsed;
+        sha = result.sha;
+      } catch (e) {
+        return res.status(500).json({ error: `GitHub fetch failed: ${e.message}` });
+      }
       if (!parsed.demos) parsed.demos = [];
+      const agentName = `${finalBusinessName} AI Assistant`;
       const demo = {
         business: finalBusinessName,
         website: website_url,
@@ -251,9 +414,19 @@ export default async function handler(req, res) {
         type: agent_type,
         created: new Date().toISOString(),
         status: 'demo',
+        greeting: persona.greeting,
+        global_prompt: persona.global_prompt,
+        main_prompt: persona.main_prompt,
+        start_prompt: persona.start_prompt,
+        scraped_details: persona.scraped_details || '',
+        raw_scrape: persona.raw_scrape || scrapedContent.substring(0, 5000),
       };
       parsed.demos.push(demo);
-      await commitClientsJson(parsed, sha);
+      try {
+        await commitClientsJson(parsed, sha);
+      } catch (e) {
+        return res.status(500).json({ error: `GitHub save failed: ${e.message}` });
+      }
 
       // 5. Return demo link
       return res.json({
@@ -262,7 +435,7 @@ export default async function handler(req, res) {
         agent_name: agentName,
         business: finalBusinessName,
         greeting: persona.greeting,
-        demo_url: `https://cloud-hak-command-center.vercel.app/demo.html?agent=${wfId}`,
+        demo_url: `https://app.cloud-hak.com/demo.html?agent=${wfId}`,
       });
     }
 

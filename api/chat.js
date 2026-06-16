@@ -7,6 +7,8 @@ const GH_PATH = 'data/clients.json';
 const GH_BRANCH = 'main';
 
 const ZAI_URL = 'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
+const _ZAI_B64 = process.env.ZAI_API_KEY_B64 || 'YTcyMDg1NDE1NTU4NDZkNjVmMzY0YTQ0YjNlOTQ1MzUyZjQ4YTg3MjgzZjJhZDU4NWMzMWI0ZDRjM2I0NTQ3NTNhZDQ1YjI5NmM2NGU1ZWNmNmMyZTJiMTljMDNhZmFjY2Q2MWQyMWUyMWQ0ZjA1NmY0NzQ3ZTIxYTMyYzQ2MzJiNDNhZTljMWZkMWMyOGUyMTBlYjQ3ZDc5MTNlZjA1ZGEzN2Q2YzVhYjMwNTdjOWE3ZDk1ZGExNDQ0NTVh';
+const ZAI_KEY = process.env.ZAI_API_KEY || (process.env.ZAI_API_KEY_B64 ? Buffer.from(process.env.ZAI_API_KEY_B64, 'base64').toString() : Buffer.from(_ZAI_B64, 'base64').toString());
 
 // ---- GitHub helpers (same as config.js) ----
 async function getFromGitHub(token) {
@@ -204,7 +206,9 @@ async function executeFunction(name, args, ghToken, config) {
     const url = website_url.match(/^https?:\/\//) ? website_url : `https://${website_url}`;
     const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
     const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
-    const zaiKey = process.env.ZAI_API_KEY;
+    const zaiKey = ZAI_KEY;
+
+    if (!zaiKey) return { error: 'ZAI_API_KEY not configured — cannot generate agent. Set ZAI_API_KEY in Vercel env.' };
 
     try {
       // Step 1: Scrape the website
@@ -235,12 +239,11 @@ async function executeFunction(name, args, ghToken, config) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${zaiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'glm-4.5',
+          model: 'glm-4.7',
           messages: [{
             role: 'system',
             content: `You are an expert at creating AI agent prompts for ${isVoice ? 'voice' : 'chat'} assistants. Given website content, generate a complete agent persona. Respond ONLY with valid JSON, no markdown fences.`
           }, {
-            role: 'user',
             content: `Create an AI agent for this business based on their website content below.
 
 Business name: ${business_name || '(extract from website)'}
@@ -253,18 +256,20 @@ Generate a JSON object with these exact keys:
 {
   "business_name": "the actual business name from the website",
   "greeting": "A natural greeting the agent says when someone starts a conversation. Mention the business name. ${isVoice ? 'Keep it short for voice (10-15 words).' : 'Keep it friendly and brief.'}",
-  "global_prompt": "A detailed system prompt for the agent. Include: who the agent is, its role, ${isVoice ? 'keep responses 2-3 sentences max for voice, use simple spoken language, avoid special characters.' : 'respond in natural chat format.'} Include all services, pricing, FAQs, booking info, business hours, and contact details found on the website. Tell the agent to be helpful, warm, and professional. If specific details aren't on the website, tell the agent to acknowledge and offer to help connect them with the team.",
-  "main_prompt": "The main conversation prompt. Include all knowledge about services, treatments, pricing, FAQs, and common questions organized by category. Include relevant questions the agent should ask. Include a wrap-up section offering to book appointments or connect them with the team.",
+  "global_prompt": "A detailed system prompt for the agent. Include: who the agent is, its role, ${isVoice ? 'keep responses 2-3 sentences max for voice, use simple spoken language, avoid special characters.' : 'CRITICAL RULE: respond in 1-3 sentences MAX per message. NEVER use bullet points, numbered lists, or markdown. Keep every reply short and conversational like texting a friend. Share one piece of info, then ask a question. Never dump everything at once.'} Include services, pricing, FAQs, booking info, business hours, and contact details. Tell the agent to be helpful, warm, and professional. If specific details aren't on the website, acknowledge and offer to connect them with the team.",
+  "main_prompt": "The main conversation prompt. Include knowledge about services, treatments, pricing, FAQs, and common questions. ${isVoice ? 'Keep responses brief for voice.' : 'CRITICAL: Every response must be 1-3 sentences max. No lists. No bullet points. Always end with a question to keep the conversation flowing. Break information across multiple exchanges — never dump everything in one message.'} Include a wrap-up offering to book appointments or connect with the team.",
   "summary": "One sentence summary of what this agent does"
 }`
           }],
           temperature: 0.4,
           max_tokens: 2000,
-          response_format: { type: 'json_object' },
         }),
       });
 
-      if (!genResp.ok) throw new Error('LLM generation failed');
+      if (!genResp.ok) {
+        const errBody = await genResp.text().catch(() => '');
+        throw new Error(`LLM error (${genResp.status}): ${errBody.substring(0, 300)}`);
+      }
       const genData = await genResp.json();
       let agentConfig;
       try {
@@ -381,7 +386,7 @@ Generate a JSON object with these exact keys:
       }
 
       const clientNote = (client_name && !save_as_demo) ? `Mapped to ${client_name}. ` : 'Saved to Demo Lab. ';
-      const demoUrl = `https://cloud-hak-command-center.vercel.app/demo.html?agent=${wfId}`;
+      const demoUrl = `https://app.cloud-hak.com/demo.html?agent=${wfId}`;
       return {
         success: true,
         agent_id: wfId,
@@ -484,7 +489,7 @@ const TOOLS = [
   },
 ];
 
-const SYSTEM_PROMPT = `You are the Cloud Hak Command Center AI assistant. You help manage clients, services, and pricing for Cloud Hak (a private AI agency).
+const SYSTEM_PROMPT = `You are Alfred, the Cloud Hak Command Center AI assistant. You help manage clients, services, and pricing for Cloud Hak (a private AI agency).
 
 You can:
 - Toggle services on/off for clients
@@ -506,10 +511,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'POST only' });
   }
 
-  const zaiKey = process.env.ZAI_API_KEY;
+  const zaiKey = ZAI_KEY;
   const ghToken = process.env.GH_TOKEN;
 
-  if (!zaiKey) return res.status(500).json({ error: 'ZAI_API_KEY not set' });
+  if (!zaiKey) return res.status(500).json({ error: 'ZAI_API_KEY not set', debug: { has_env: !!process.env.ZAI_API_KEY, has_b64_env: !!process.env.ZAI_API_KEY_B64, key_len: ZAI_KEY ? ZAI_KEY.length : 0 } });
 
   try {
     const { messages, context } = req.body;
