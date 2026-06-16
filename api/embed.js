@@ -62,7 +62,7 @@ export default async function handler(req, res) {
 
     return res.json({
       token: embedToken,
-      widgetUrl: `/dograh-widget.js?token=${embedToken}&environment=production&apiEndpoint=${TUNNEL_API}`,
+      widgetUrl: `/api/widget.js?token=${embedToken}&environment=production&apiEndpoint=${TUNNEL_API}`,
       apiEndpoint: TUNNEL_API,
       uiEndpoint: TUNNEL_UI,
       config,
