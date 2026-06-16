@@ -144,7 +144,7 @@ Generate a JSON object with these exact keys:
   "scraped_details": "A clean summary of ALL key facts extracted: services, pricing, hours, location, team, booking info, phone, email. Formatted as readable text for later editing."
 }`;
 
-  // Retry up to 2 times with 30s timeout each
+  // Retry up to 2 times with 12s timeout each
   let lastError;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -152,12 +152,12 @@ Generate a JSON object with these exact keys:
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
         body: JSON.stringify({
-          model: 'glm-4.7',
+          model: 'glm-4.5',
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
           temperature: 0.4,
-          max_tokens: 3000,
+          max_tokens: 2000,
         }),
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(12000),
       });
       if (!resp.ok) {
         const errBody = await resp.text().catch(() => '');
@@ -385,86 +385,81 @@ export default async function handler(req, res) {
       const url = website_url.match(/^https?:\/\//) ? website_url : `https://${website_url}`;
       const finalBusinessName = business_name || new URL(url).hostname.replace('www.', '').replace(/\..+$/, '');
 
-      // 1. Start async processing — return immediately with demo stub
-      const demoId = 'demo_' + Date.now();
-      const stub = {
-        id: demoId,
+      // 1. Scrape website
+      let scrapedContent;
+      try {
+        scrapedContent = await scrapeWebsite(url);
+      } catch (e) {
+        return res.status(400).json({ error: `Could not reach ${url}: ${e.message}` });
+      }
+      if (!scrapedContent || scrapedContent.length < 50) {
+        return res.status(400).json({ error: 'Website returned no usable content' });
+      }
+      // Trim scrape to 10K chars to keep Z.AI fast
+      if (scrapedContent.length > 10000) {
+        scrapedContent = scrapedContent.substring(0, 10000);
+      }
+
+      // 2. Generate persona via Z.AI
+      let persona;
+      try {
+        persona = await generatePersona(scrapedContent, finalBusinessName, url);
+      } catch (e) {
+        return res.status(500).json({ error: `Agent generation failed: ${e.message}` });
+      }
+
+      // 3. Create Dograh workflow
+      let token, wfId;
+      try {
+        token = await dograhLogin();
+        const agentName = `${finalBusinessName} AI Assistant`;
+        wfId = await createDograhWorkflow(token, agentName, persona.global_prompt, persona.start_prompt, persona.main_prompt, persona.greeting);
+      } catch (e) {
+        return res.status(500).json({ error: `Dograh workflow creation failed: ${e.message}` });
+      }
+
+      // 4. Save to clients.json demos array
+      let parsed, sha;
+      try {
+        const result = await fetchClientsJson();
+        parsed = result.parsed;
+        sha = result.sha;
+      } catch (e) {
+        return res.status(500).json({ error: `GitHub fetch failed: ${e.message}` });
+      }
+      if (!parsed.demos) parsed.demos = [];
+      const agentName = `${finalBusinessName} AI Assistant`;
+      const demo = {
         business: finalBusinessName,
         website: website_url,
-        agentId: null,
-        agentName: `${finalBusinessName} AI Assistant`,
+        agentId: wfId,
+        agentName,
         type: agent_type,
         created: new Date().toISOString(),
-        status: 'processing',
+        status: 'demo',
+        greeting: persona.greeting,
+        global_prompt: persona.global_prompt,
+        main_prompt: persona.main_prompt,
+        start_prompt: persona.start_prompt,
+        scraped_details: persona.scraped_details || '',
+        raw_scrape: persona.raw_scrape || scrapedContent.substring(0, 5000),
       };
+      parsed.demos.push(demo);
+      try {
+        await commitClientsJson(parsed, sha);
+      } catch (e) {
+        return res.status(500).json({ error: `GitHub save failed: ${e.message}` });
+      }
 
-      // Fire and forget — process in background
-      setImmediate(async () => {
-        try {
-          // 1. Scrape website
-          let scrapedContent;
-          try {
-            scrapedContent = await scrapeWebsite(url);
-          } catch (e) {
-            return console.error(`[${demoId}] Scrape failed:`, e.message);
-          }
-
-          // 2. Generate persona via Z.AI
-          let persona;
-          try {
-            persona = await generatePersona(scrapedContent, finalBusinessName, url);
-          } catch (e) {
-            return console.error(`[${demoId}] Persona failed:`, e.message);
-          }
-
-          // 3. Create Dograh workflow
-          let token, wfId;
-          try {
-            token = await dograhLogin();
-            wfId = await createDograhWorkflow(token, `${finalBusinessName} AI Assistant`, persona.global_prompt, persona.start_prompt, persona.main_prompt, persona.greeting);
-          } catch (e) {
-            return console.error(`[${demoId}] Dograh failed:`, e.message);
-          }
-
-          // 4. Save to clients.json
-          let parsed, sha;
-          try {
-            const result = await fetchClientsJson();
-            parsed = result.parsed;
-            sha = result.sha;
-          } catch (e) {
-            return console.error(`[${demoId}] GitHub fetch failed:`, e.message);
-          }
-          if (!parsed.demos) parsed.demos = [];
-          const demo = {
-            business: finalBusinessName,
-            website: website_url,
-            agentId: wfId,
-            agentName: `${finalBusinessName} AI Assistant`,
-            type: agent_type,
-            created: new Date().toISOString(),
-            status: 'demo',
-            greeting: persona.greeting,
-            global_prompt: persona.global_prompt,
-            main_prompt: persona.main_prompt,
-            start_prompt: persona.start_prompt,
-            scraped_details: persona.scraped_details || '',
-            raw_scrape: persona.raw_scrape || scrapedContent.substring(0, 5000),
-          };
-          parsed.demos.push(demo);
-          try {
-            await commitClientsJson(parsed, sha);
-          } catch (e) {
-            return console.error(`[${demoId}] GitHub save failed:`, e.message);
-          }
-
-          console.log(`[${demoId}] Demo created successfully: ${wfId}`);
-        } catch (e) {
-          console.error(`[${demoId}] Processing error:`, e);
-        }
+      // 5. Return demo link
+      return res.json({
+        success: true,
+        agent_id: wfId,
+        agent_name: agentName,
+        business: finalBusinessName,
+        greeting: persona.greeting,
+        demo_url: `https://app.cloud-hak.com/demo.html?agent=${wfId}`,
       });
-
-      return res.json({ success: true, id: demoId, status: 'processing', message: 'Demo agent is being created. Refresh in ~60 seconds to see the result.' });
     }
 
     return res.status(400).json({ error: 'Use GET (list) or POST (create/delete/convert)' });
