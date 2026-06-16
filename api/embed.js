@@ -1,10 +1,10 @@
 // /api/embed.js — Returns Dograh embed token + tunnel URLs for voice widget
-const DOGRAH_URL = process.env.DOGRAH_API_URL || 'http://localhost:8000';
+const DOGRAH_URL = process.env.DOGRAH_API_URL || 'https://voice.cloud-hak.com';
 const DOGRAH_PASS = process.env.DOGRAH_PASSWORD || 'CloudHak2026!';
 
 // Tunnel URLs (updated when permanent domain is ready)
-const TUNNEL_API = process.env.TUNNEL_API_URL || 'https://laid-knowledgestorm-inch-perfect.trycloudflare.com';
-const TUNNEL_UI = process.env.TUNNEL_UI_URL || 'https://penetration-represents-stamp-wages.trycloudflare.com';
+const TUNNEL_API = process.env.TUNNEL_API_URL || 'https://voice.cloud-hak.com';
+const TUNNEL_UI = process.env.TUNNEL_UI_URL || 'https://voice-ui.cloud-hak.com';
 
 async function dograhLogin() {
   const resp = await fetch(`${DOGRAH_URL}/api/v1/auth/login`, {

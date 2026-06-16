@@ -147,25 +147,18 @@
 /* ===== MOBILE: FULL SCREEN WIDGET ===== */
 @media (max-width: 600px) {
   .chat-widget {
-    bottom:0; right:0; width:100vw; height:100dvh;
-    max-width:100vw; max-height:100dvh; border-radius:0;
+    bottom:0; right:0; width:100vw; height:100vh;
+    max-width:100vw; max-height:100vh; border-radius:0;
+  }
+  /* Use visual viewport to handle keyboard properly */
+  .chat-widget.keyboard-open {
+    height:100vh;
   }
   @keyframes widgetOpen { 0%{transform:translateY(100%);opacity:0;} 100%{transform:translateY(0);opacity:1;} }
-}
-
-/* Demo banner */
-.demo-banner {
-  position:fixed; top:0; left:0; right:0; z-index:10000;
-  background:rgba(0,0,0,0.85); color:#e8c170; font-size:12px; font-weight:600;
-  text-align:center; padding:6px 12px; letter-spacing:0.3px;
-  backdrop-filter:blur(8px);
 }
 </style>
 </head>
 <body>
-
-<!-- Demo banner -->
-<div class="demo-banner">🎯 Live AI Demo — this is how the chat widget looks on your client's website</div>
 
 <!-- ===== INFO BACKGROUND ===== -->
 <div class="info-bg" id="info-bg">
@@ -267,6 +260,23 @@ function toggleWidget() {
     widget.classList.add('hidden');
     bubble.classList.remove('hidden');
   }
+}
+
+// ===== Mobile keyboard handling =====
+// Use visualViewport API to resize widget when keyboard opens
+if (window.visualViewport) {
+  const vw = window.visualViewport;
+  const onResize = () => {
+    if (window.innerWidth <= 600 && !widget.classList.contains('hidden')) {
+      const h = vw.height;
+      widget.style.height = h + 'px';
+      widget.style.maxHeight = h + 'px';
+      // Scroll chat to bottom
+      chat.scrollTop = chat.scrollHeight;
+    }
+  };
+  vw.addEventListener('resize', onResize);
+  vw.addEventListener('scroll', onResize);
 }
 
 // ===== Voice =====
