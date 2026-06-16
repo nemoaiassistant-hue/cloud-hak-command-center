@@ -6,74 +6,227 @@
 <title>AI Assistant Demo</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#0a0b14; color:#e4e4e7; height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; -webkit-overflow-scrolling:touch; }
 
-/* Header */
-.header { background:linear-gradient(135deg,#1a1d2e,#0f1120); padding:20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:14px; }
-.header-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
-.header-info h1 { font-size:17px; font-weight:600; }
-.header-info p { font-size:13px; color:#71717a; }
-.header-badge { margin-left:auto; background:rgba(34,197,94,0.15); color:#22c55e; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; }
-.header-badge::before { content:''; width:7px; height:7px; border-radius:50%; background:#22c55e; }
+/* ===== MOCK WEBSITE BACKGROUND ===== */
+.web-bg {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh; height:100dvh; overflow-y:auto;
+  background:#f8f9fa; color:#1a1a2e; position:relative;
+}
 
-/* Voice call button */
-.voice-btn { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; margin-left:8px; transition:transform 0.15s,opacity 0.15s; box-shadow:0 2px 8px rgba(34,197,94,0.3); }
-.voice-btn:active { transform:scale(0.92); }
-.voice-btn.loading { opacity:0.5; animation:pulse 1.5s infinite; }
-.voice-btn.active { background:linear-gradient(135deg,#ef4444,#dc2626); box-shadow:0 2px 12px rgba(239,68,68,0.4); animation:pulse 1s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+/* Fake navbar */
+.web-nav {
+  display:flex; align-items:center; gap:16px;
+  padding:16px 24px; background:#fff; border-bottom:1px solid #e5e7eb;
+  position:sticky; top:0; z-index:1;
+}
+.web-logo { font-weight:800; font-size:20px; }
+.web-nav-links { display:flex; gap:20px; margin-left:auto; }
+.web-nav-links a { color:#6b7280; text-decoration:none; font-size:14px; }
+.web-nav-links span { color:#6b7280; font-size:14px; }
+
+/* Hero */
+.web-hero {
+  padding:48px 24px 40px; text-align:center; max-width:800px; margin:0 auto;
+}
+.web-hero h1 { font-size:28px; margin-bottom:10px; line-height:1.3; }
+.web-hero p { font-size:16px; color:#6b7280; margin-bottom:20px; line-height:1.6; }
+.web-cta {
+  display:inline-block; padding:12px 28px; border-radius:8px;
+  font-size:15px; font-weight:600; color:#fff; text-decoration:none;
+}
+
+/* Services grid */
+.web-services {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
+  max-width:800px; margin:0 auto; padding:0 24px 40px;
+}
+.web-card {
+  background:#fff; border-radius:12px; padding:20px; border:1px solid #e5e7eb;
+}
+.web-card .ico { font-size:28px; margin-bottom:8px; }
+.web-card h3 { font-size:15px; margin-bottom:4px; }
+.web-card p { font-size:13px; color:#9ca3af; line-height:1.5; }
+
+/* Fake footer */
+.web-footer {
+  text-align:center; padding:20px; font-size:12px; color:#9ca3af;
+  border-top:1px solid #e5e7eb;
+}
+
+/* ===== CHAT WIDGET BUBBLE ===== */
+.chat-bubble {
+  position:fixed; bottom:20px; right:20px;
+  width:60px; height:60px; border-radius:50%;
+  border:none; cursor:pointer; z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  transition:transform 0.2s;
+  animation:bounceIn 0.4s ease;
+}
+.chat-bubble:active { transform:scale(0.9); }
+.chat-bubble.hidden { display:none; }
+@keyframes bounceIn { 0%{transform:scale(0);} 60%{transform:scale(1.1);} 100%{transform:scale(1);} }
+
+/* Notification dot */
+.chat-bubble::after {
+  content:''; position:absolute; top:6px; right:6px;
+  width:12px; height:12px; border-radius:50%; background:#ef4444;
+  border:2px solid #fff; animation:notifPulse 2s infinite;
+}
+@keyframes notifPulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+/* ===== CHAT WIDGET WINDOW ===== */
+.chat-widget {
+  position:fixed; bottom:20px; right:20px; z-index:9999;
+  width:380px; max-width:calc(100vw - 40px);
+  height:560px; max-height:calc(100vh - 40px);
+  background:#0a0b14; border-radius:20px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+  display:flex; flex-direction:column; overflow:hidden;
+  transform-origin:bottom right;
+  animation:widgetOpen 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.chat-widget.hidden { display:none; }
+@keyframes widgetOpen { 0%{transform:scale(0.5);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+
+/* Widget header */
+.wh-header {
+  background:linear-gradient(135deg,#1a1d2e,#0f1120);
+  padding:14px 18px; display:flex; align-items:center; gap:12px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.wh-avatar {
+  width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.wh-info { flex:1; min-width:0; }
+.wh-info h1 { font-size:14px; font-weight:600; color:#e4e4e7; }
+.wh-info p { font-size:11px; color:#71717a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wh-badge { font-size:11px; color:#22c55e; display:flex; align-items:center; gap:4px; }
+.wh-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:#22c55e; }
+.wh-close {
+  width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.06);
+  border:none; color:#71717a; cursor:pointer; font-size:16px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.wh-close:hover { background:rgba(255,255,255,0.12); color:#e4e4e7; }
 
 /* Chat area */
-.chat-area { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
-.msg { max-width:85%; padding:13px 17px; border-radius:18px; font-size:15px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.3s ease; }
-.msg.user { align-self:flex-end; background:linear-gradient(135deg,#6366f1,#7c3aed); color:white; border-bottom-right-radius:4px; }
-.msg.bot { align-self:flex-start; background:#1a1d2e; border:1px solid rgba(255,255,255,0.06); border-bottom-left-radius:4px; }
-.msg.system { align-self:center; background:rgba(255,255,255,0.03); color:#71717a; font-size:13px; padding:8px 16px; border-radius:12px; max-width:90%; text-align:center; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+.wh-chat {
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:14px 16px; display:flex; flex-direction:column; gap:10px;
+}
+.msg { max-width:85%; padding:11px 15px; border-radius:16px; font-size:14px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.3s ease; }
+.msg.user { align-self:flex-end; color:#fff; border-bottom-right-radius:4px; }
+.msg.bot { align-self:flex-start; background:#1a1d2e; color:#e4e4e7; border:1px solid rgba(255,255,255,0.06); border-bottom-left-radius:4px; }
+.msg.system { align-self:center; background:rgba(255,255,255,0.03); color:#71717a; font-size:12px; padding:6px 14px; border-radius:10px; max-width:90%; text-align:center; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
 
-/* Typing indicator */
-.typing { align-self:flex-start; background:#1a1d2e; border:1px solid rgba(255,255,255,0.06); padding:14px 18px; border-radius:18px; border-bottom-left-radius:4px; display:flex; gap:5px; }
-.typing span { width:8px; height:8px; border-radius:50%; background:#52525b; animation:blink 1.4s infinite; }
+/* Typing */
+.typing { align-self:flex-start; background:#1a1d2e; border:1px solid rgba(255,255,255,0.06); padding:12px 16px; border-radius:16px; border-bottom-left-radius:4px; display:flex; gap:4px; }
+.typing span { width:7px; height:7px; border-radius:50%; background:#52525b; animation:blink 1.4s infinite; }
 .typing span:nth-child(2){animation-delay:0.2s;}
 .typing span:nth-child(3){animation-delay:0.4s;}
 @keyframes blink { 0%,60%,100%{opacity:0.3;} 30%{opacity:1;} }
 
 /* Input */
-.input-area { flex-shrink:0; padding:12px 16px 8px; border-top:1px solid rgba(255,255,255,0.06); background:#0a0b14; }
-.input-box { display:flex; gap:10px; align-items:flex-end; background:#1a1d2e; border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:6px 6px 6px 18px; }
-.input-box:focus-within { border-color:#6366f1; }
-.input-box textarea { flex:1; background:transparent; border:none; color:#e4e4e7; font-size:15px; resize:none; outline:none; font-family:inherit; max-height:100px; line-height:1.4; padding:8px 0; }
-.send-btn { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#7c3aed); border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; transition:transform 0.15s,opacity 0.15s; }
-.send-btn:active { transform:scale(0.92); }
-.send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.wh-input { flex-shrink:0; padding:10px 12px 6px; border-top:1px solid rgba(255,255,255,0.06); }
+.wh-input-box { display:flex; gap:8px; align-items:flex-end; background:#1a1d2e; border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:4px 4px 4px 14px; }
+.wh-input-box:focus-within { border-color:#6366f1; }
+.wh-input-box textarea { flex:1; background:transparent; border:none; color:#e4e4e7; font-size:14px; resize:none; outline:none; font-family:inherit; max-height:80px; line-height:1.4; padding:6px 0; }
+.wh-send { width:34px; height:34px; border-radius:50%; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; transition:transform 0.15s; }
+.wh-send:active { transform:scale(0.9); }
+.wh-send:disabled { opacity:0.4; cursor:not-allowed; }
 
-/* Powered by footer */
-.powered { flex-shrink:0; text-align:center; padding:6px 8px 10px; font-size:11px; color:#3f3f46; padding-bottom:max(10px,env(safe-area-inset-bottom)); }
-.powered a { color:#52525b; text-decoration:none; }
+/* Voice button */
+.wh-voice {
+  width:34px; height:34px; border-radius:50%; border:none; color:#22c55e;
+  background:rgba(34,197,94,0.1); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:15px; flex-shrink:0; transition:all 0.15s;
+}
+.wh-voice:active { transform:scale(0.9); }
+.wh-voice.loading { opacity:0.5; animation:pulse 1.5s infinite; }
+.wh-voice.active { color:#ef4444; background:rgba(239,68,68,0.1); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+
+/* Powered by */
+.wh-powered { flex-shrink:0; text-align:center; padding:4px 8px 8px; font-size:10px; color:#3f3f46; padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+.wh-powered a { color:#52525b; text-decoration:none; }
+
+/* ===== MOBILE: FULL SCREEN WIDGET ===== */
+@media (max-width: 600px) {
+  .chat-widget {
+    bottom:0; right:0; width:100vw; height:100dvh;
+    max-width:100vw; max-height:100dvh; border-radius:0;
+  }
+  @keyframes widgetOpen { 0%{transform:translateY(100%);opacity:0;} 100%{transform:translateY(0);opacity:1;} }
+}
+
+/* Demo banner */
+.demo-banner {
+  position:fixed; top:0; left:0; right:0; z-index:10000;
+  background:rgba(0,0,0,0.85); color:#e8c170; font-size:12px; font-weight:600;
+  text-align:center; padding:6px 12px; letter-spacing:0.3px;
+  backdrop-filter:blur(8px);
+}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-avatar" id="avatar">🤖</div>
-  <div class="header-info">
-    <h1 id="agent-name">AI Assistant</h1>
-    <p id="agent-desc">Loading...</p>
+<!-- Demo banner -->
+<div class="demo-banner">🎯 Live AI Demo — this is how the chat widget looks on your client's website</div>
+
+<!-- ===== MOCK WEBSITE ===== -->
+<div class="web-bg" id="web-bg">
+  <div class="web-nav">
+    <div class="web-logo" id="web-logo">Business</div>
+    <div class="web-nav-links">
+      <span>About</span><span>Services</span><span>Contact</span>
+    </div>
   </div>
-  <div class="header-badge">Online</div>
-  <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Start voice call">📞</button>
+  <div class="web-hero">
+    <h1 id="web-hero-title">Welcome to our practice</h1>
+    <p id="web-hero-sub">Your trusted local provider. Book your appointment today.</p>
+    <a href="#" class="web-cta" id="web-cta" style="background:#3bb6b3">Book Now</a>
+  </div>
+  <div class="web-services" id="web-services">
+    <div class="web-card"><div class="ico">🩺</div><h3>Consultation</h3><p>Expert consultation with our experienced team.</p></div>
+    <div class="web-card"><div class="ico">📅</div><h3>Easy Booking</h3><p>Schedule online or call us during business hours.</p></div>
+    <div class="web-card"><div class="ico">⭐</div><h3>Trusted Service</h3><p>Committed to providing the best care for every client.</p></div>
+  </div>
+  <div class="web-footer">© 2026 — This is a simulated website preview for demo purposes</div>
 </div>
 
-<div class="chat-area" id="chat"></div>
+<!-- ===== CHAT BUBBLE ===== -->
+<button class="chat-bubble" id="chat-bubble" onclick="toggleWidget()" style="background:#6366f1">💬</button>
 
-<div class="input-area">
-  <div class="input-box">
-    <textarea id="msg-input" rows="1" placeholder="Type your message..." autofocus></textarea>
-    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+<!-- ===== CHAT WIDGET ===== -->
+<div class="chat-widget hidden" id="chat-widget">
+  <div class="wh-header">
+    <div class="wh-avatar" id="wh-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">🤖</div>
+    <div class="wh-info">
+      <h1 id="wh-name">AI Assistant</h1>
+      <p id="wh-desc">Typically replies instantly</p>
+    </div>
+    <button class="wh-voice" id="wh-voice" onclick="toggleVoice()" title="Voice call">📞</button>
+    <span class="wh-badge">Online</span>
+    <button class="wh-close" onclick="toggleWidget()">✕</button>
   </div>
-</div>
 
-<div class="powered">Powered by <a href="https://cloud-hak.com" target="_blank">Cloud Hak AI</a></div>
+  <div class="wh-chat" id="chat"></div>
+
+  <div class="wh-input">
+    <div class="wh-input-box">
+      <textarea id="msg-input" rows="1" placeholder="Type your message..."></textarea>
+      <button class="wh-voice" id="wh-voice-inline" onclick="toggleVoice()" title="Voice">📞</button>
+      <button class="wh-send" id="send-btn" onclick="sendMessage()" style="background:linear-gradient(135deg,#6366f1,#7c3aed)">➤</button>
+    </div>
+  </div>
+
+  <div class="wh-powered">Powered by <a href="https://cloud-hak.com" target="_blank">Cloud Hak AI</a></div>
+</div>
 
 <script>
 const params = new URLSearchParams(location.search);
@@ -82,51 +235,71 @@ const API = '/api/demo';
 let RUN_ID = null;
 let REVISION = null;
 let sending = false;
+let sessionStarted = false;
 
 const chat = document.getElementById('chat');
 const input = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
-const voiceBtn = document.getElementById('voice-btn');
+const voiceBtn = document.getElementById('wh-voice');
+const bubble = document.getElementById('chat-bubble');
+const widget = document.getElementById('chat-widget');
 
-// ===== Voice Call =====
-let voiceLoaded = false;
+// Theme color from URL param (for branding)
+const themeColor = params.get('color') || '#6366f1';
+
+// Apply theme
+function applyTheme() {
+  bubble.style.background = themeColor;
+  document.getElementById('wh-avatar').style.background = themeColor;
+  sendBtn.style.background = themeColor;
+  document.getElementById('web-cta').style.background = themeColor;
+
+  // Derive a gradient for user messages
+  document.documentElement.style.setProperty('--user-color', themeColor);
+}
+
+function toggleWidget() {
+  if (widget.classList.contains('hidden')) {
+    widget.classList.remove('hidden');
+    bubble.classList.add('hidden');
+    if (!sessionStarted) {
+      sessionStarted = true;
+      startSession();
+    }
+    // Focus input after animation
+    setTimeout(() => input.focus(), 300);
+  } else {
+    widget.classList.add('hidden');
+    bubble.classList.remove('hidden');
+  }
+}
+
+// ===== Voice =====
 let voiceActive = false;
 
 async function toggleVoice() {
   if (voiceActive) {
-    // End call — reload to clean up WebRTC
     addMsg('system', 'Voice call ended.');
-    if (window.DograhWidget && window.DograhWidget.endCall) {
-      window.DograhWidget.endCall();
-    }
+    if (window.DograhWidget && window.DograhWidget.endCall) window.DograhWidget.endCall();
     voiceActive = false;
     voiceBtn.classList.remove('active');
     voiceBtn.textContent = '📞';
     return;
   }
-
   voiceBtn.classList.add('loading');
-
   try {
-    // Get embed token + widget URL from our API
-    const resp = await fetch(`/api/embed?workflow_id=${WF_ID}`);
+    const resp = await fetch('/api/embed?workflow_id=' + WF_ID);
     if (!resp.ok) throw new Error('Voice not available');
     const data = await resp.json();
-
     if (!data.token) throw new Error('No embed token');
-
     addMsg('system', '🎙️ Starting voice call... Allow microphone access when prompted.');
-
-    // Load the Dograh widget script
     const existing = document.getElementById('dograh-widget');
     if (existing) existing.remove();
-
     const script = document.createElement('script');
     script.id = 'dograh-widget';
     script.src = data.widgetUrl;
     script.async = true;
     script.onload = () => {
-      voiceLoaded = true;
       voiceActive = true;
       voiceBtn.classList.remove('loading');
       voiceBtn.classList.add('active');
@@ -135,11 +308,9 @@ async function toggleVoice() {
     };
     script.onerror = () => {
       voiceBtn.classList.remove('loading');
-      addMsg('system', '⚠️ Voice server unavailable. Try again later.');
+      addMsg('system', '⚠️ Voice server unavailable.');
     };
     document.body.appendChild(script);
-
-    // Fallback timeout
     setTimeout(() => {
       if (voiceBtn.classList.contains('loading')) {
         voiceBtn.classList.remove('loading');
@@ -148,17 +319,16 @@ async function toggleVoice() {
         voiceBtn.textContent = '🔇';
       }
     }, 5000);
-
   } catch (e) {
     voiceBtn.classList.remove('loading');
-    addMsg('system', `⚠️ Voice unavailable: ${e.message}`);
+    addMsg('system', '⚠️ Voice unavailable: ' + e.message);
   }
 }
 
 // Auto-resize textarea
 input.addEventListener('input', () => {
   input.style.height = 'auto';
-  input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+  input.style.height = Math.min(input.scrollHeight, 80) + 'px';
 });
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -166,8 +336,10 @@ input.addEventListener('keydown', (e) => {
 
 function addMsg(role, text) {
   const div = document.createElement('div');
-  div.className = `msg ${role}`;
+  div.className = 'msg ' + role;
   div.textContent = text;
+  // Style user messages with theme color
+  if (role === 'user') div.style.background = themeColor;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -193,24 +365,33 @@ function renderMessages(messages) {
   }
 }
 
-// Init: load agent info + start session
-async function init() {
+// Apply theme to user message class via CSS
+const sheet = document.createElement('style');
+sheet.textContent = `.msg.user { background: ${themeColor} !important; }`;
+document.head.appendChild(sheet);
+
+async function startSession() {
   if (!WF_ID) {
     addMsg('system', 'No agent ID specified. Add ?agent=ID to the URL.');
     return;
   }
-
   try {
-    // Get agent info
-    const infoResp = await fetch(`${API}?action=info&workflow_id=${WF_ID}`);
+    // Load agent info
+    const infoResp = await fetch(API + '?action=info&workflow_id=' + WF_ID);
     const info = await infoResp.json();
     if (info.error) throw new Error(info.error);
 
-    document.getElementById('agent-name').textContent = info.name || 'AI Assistant';
-    document.getElementById('agent-desc').textContent = info.description || 'Ask me anything!';
-    document.title = info.name || 'AI Assistant Demo';
+    const agentName = info.name || 'AI Assistant';
+    document.getElementById('wh-name').textContent = agentName;
+    document.getElementById('wh-desc').textContent = info.description || 'Ask me anything!';
+    document.title = agentName + ' — Live Demo';
 
-    // Start chat session
+    // Update mock website with agent's business name
+    const bizName = agentName.replace(/\s+(AI|Assistant|Agent|Bot).*$/i, '').trim() || agentName;
+    document.getElementById('web-logo').textContent = bizName;
+    document.getElementById('web-hero-title').textContent = 'Welcome to ' + bizName;
+
+    // Start session
     showTyping();
     const startResp = await fetch(API, {
       method: 'POST',
@@ -226,13 +407,12 @@ async function init() {
     hideTyping();
     if (session.messages && session.messages.length > 0) {
       renderMessages(session.messages);
-    } else {
-      // Show greeting as first message
-      if (info.greeting) addMsg('bot', info.greeting);
+    } else if (info.greeting) {
+      addMsg('bot', info.greeting);
     }
   } catch (e) {
     hideTyping();
-    addMsg('system', `Connection error: ${e.message}. The AI server may be offline. Please try again later.`);
+    addMsg('system', 'Connection error: ' + e.message + '. The AI server may be offline.');
   }
 }
 
@@ -259,9 +439,8 @@ async function sendMessage() {
     hideTyping();
 
     if (data.error) {
-      addMsg('system', `Error: ${data.error}`);
+      addMsg('system', 'Error: ' + data.error);
     } else {
-      // Render all messages (keeps history clean)
       renderMessages(data.messages);
     }
 
@@ -272,14 +451,14 @@ async function sendMessage() {
     }
   } catch (e) {
     hideTyping();
-    addMsg('system', `Connection error: ${e.message}`);
+    addMsg('system', 'Connection error: ' + e.message);
   }
 
   sending = false;
   sendBtn.disabled = false;
 }
 
-init();
+applyTheme();
 </script>
 </body>
 </html>
