@@ -250,6 +250,8 @@ function toggleWidget() {
   if (widget.classList.contains('hidden')) {
     widget.classList.remove('hidden');
     bubble.classList.add('hidden');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('info-bg').style.overflow = 'hidden';
     if (!sessionStarted) {
       sessionStarted = true;
       startSession();
@@ -259,6 +261,8 @@ function toggleWidget() {
   } else {
     widget.classList.add('hidden');
     bubble.classList.remove('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('info-bg').style.overflow = '';
   }
 }
 
