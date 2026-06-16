@@ -148,11 +148,11 @@ Generate a JSON object with these exact keys:
   let lastError;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
+      const resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
         body: JSON.stringify({
-          model: 'glm-4.5',
+          model: 'glm-4-flash',
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
           temperature: 0.4,
           max_tokens: 2000,
@@ -395,9 +395,9 @@ export default async function handler(req, res) {
       if (!scrapedContent || scrapedContent.length < 50) {
         return res.status(400).json({ error: 'Website returned no usable content' });
       }
-      // Trim scrape to 10K chars to keep Z.AI fast
-      if (scrapedContent.length > 10000) {
-        scrapedContent = scrapedContent.substring(0, 10000);
+      // Trim scrape to 5K chars to keep Z.AI fast
+      if (scrapedContent.length > 5000) {
+        scrapedContent = scrapedContent.substring(0, 5000);
       }
 
       // 2. Generate persona via Z.AI
