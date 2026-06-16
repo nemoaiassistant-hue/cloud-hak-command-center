@@ -386,6 +386,91 @@ tr:hover{background:var(--border)}
   #chat-panel { width: calc(100vw - 32px); right: 16px; bottom: 88px; height: calc(100vh - 120px); }
   #chat-fab { bottom: 16px; right: 16px; }
 }
+
+/* ===== AGENT SUITE ===== */
+.agent-suite-header{margin-bottom:24px}
+.agent-suite-header h2{font-size:24px;font-weight:800;letter-spacing:-0.5px}
+.agent-suite-header p{color:var(--gray);font-size:14px;margin-top:4px}
+
+.agent-suite-banner{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(59,182,179,0.12),rgba(232,193,112,0.08));
+  border:1px solid rgba(59,182,179,0.25);margin-bottom:24px;
+}
+.agent-suite-banner .banner-icon{font-size:26px;flex-shrink:0}
+.agent-suite-banner .banner-text{font-size:13px;color:var(--text);line-height:1.5}
+.agent-suite-banner .banner-text b{color:var(--teal)}
+
+.agent-grid{
+  display:grid;grid-template-columns:1fr;gap:16px;
+}
+@media(min-width:640px){.agent-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1080px){.agent-grid{grid-template-columns:repeat(3,1fr)}}
+
+.agent-card{
+  position:relative;background:var(--dark);border:1px solid var(--border);
+  border-radius:14px;padding:20px;min-height:200px;display:flex;flex-direction:column;
+  transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+.agent-card:hover{
+  border-color:var(--teal);
+  box-shadow:0 0 0 1px rgba(59,182,179,0.25), 0 8px 30px rgba(59,182,179,0.12);
+  transform:translateY(-2px);
+}
+.agent-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.agent-card-icon{
+  width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;background:rgba(59,182,179,0.08);border:1px solid rgba(59,182,179,0.18);flex-shrink:0;
+}
+.agent-card-name{font-size:16px;font-weight:700;margin-top:12px}
+.agent-card-desc{font-size:13px;color:var(--gray);margin-top:6px;line-height:1.45;flex:1}
+
+.agent-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.agent-tag{
+  font-size:11px;font-weight:600;color:var(--teal);background:rgba(59,182,179,0.08);
+  border:1px solid rgba(59,182,179,0.15);padding:3px 9px;border-radius:20px;white-space:nowrap;
+}
+
+.agent-card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+
+.agent-status-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.4px;
+}
+.agent-status-badge.deployed{background:rgba(16,185,129,0.14);color:var(--green);border:1px solid rgba(16,185,129,0.3)}
+.agent-status-badge.deploying{background:rgba(232,193,112,0.14);color:var(--gold);border:1px solid rgba(232,193,112,0.3)}
+.agent-status-badge.idle{background:var(--light-gray);color:var(--gray);border:1px solid var(--border)}
+
+.agent-deploy-btn{
+  background:var(--teal);color:#001818;border:none;padding:9px 18px;border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:700;transition:opacity .15s,transform .1s;white-space:nowrap;
+}
+.agent-deploy-btn:hover{opacity:0.9}
+.agent-deploy-btn:active{transform:scale(0.97)}
+.agent-deploy-btn:disabled{opacity:0.6;cursor:default}
+
+.agent-active-link{
+  display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);color:var(--green);
+  text-decoration:none;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid rgba(16,185,129,0.25);
+}
+.agent-active-link:hover{background:rgba(16,185,129,0.2)}
+
+.agent-deploy-field{margin-bottom:14px}
+.agent-deploy-field label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.agent-deploy-field input{
+  width:100%;padding:11px 14px;background:var(--light-gray);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;
+}
+.agent-deploy-field input:focus{border-color:var(--teal)}
+
+.agent-success-box{
+  background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;
+  padding:18px;margin-top:8px;text-align:center;
+}
+.agent-success-box .ok{font-size:22px}
+.agent-success-box .link{
+  display:inline-block;margin-top:10px;background:var(--green);color:#fff;text-decoration:none;
+  padding:10px 20px;border-radius:8px;font-weight:700;font-size:14px;
+}
 </style>
 </head>
 <body>
@@ -418,6 +503,10 @@ tr:hover{background:var(--border)}
     <div class="nav-item" data-view="demo-lab" onclick="switchView('demo-lab')">
       <span class="nav-icon">🧪</span> Demo Lab
       <span class="nav-badge" id="badge-demo-lab">0</span>
+    </div>
+    <div class="nav-item" data-view="agent-suite" onclick="switchView('agent-suite')">
+      <span class="nav-icon">🤖</span> Agent Suite
+      <span class="nav-badge" id="badge-agent-suite">6</span>
     </div>
 
     <div class="nav-section-label">Services</div>
@@ -514,6 +603,9 @@ tr:hover{background:var(--border)}
 
     <!-- ===== DEMO LAB ===== -->
     <div class="view" id="view-demo-lab"></div>
+
+    <!-- ===== AGENT SUITE ===== -->
+    <div class="view" id="view-agent-suite"></div>
 
     <!-- ===== SERVICE PAGES (shared template, populated by JS) ===== -->
     <div class="view" id="view-websites"></div>
@@ -1059,6 +1151,12 @@ function switchView(viewId) {
     renderDemoLab();
     document.getElementById('breadcrumb').textContent = 'Cloud Hak / Demo Lab';
     document.getElementById('page-title').textContent = '🧪 Demo Lab';
+  } else if (viewId === 'agent-suite') {
+    renderAgentSuite();
+    document.getElementById('breadcrumb').textContent = selectedClient
+      ? `${selectedClient.name} / Agent Suite`
+      : 'Cloud Hak / Agent Suite';
+    document.getElementById('page-title').textContent = '🤖 Agent Suite';
   } else {
     const titles = { clients:'Clients', reports:'Reports', settings:'Settings' };
     document.getElementById('breadcrumb').textContent = `Cloud Hak / ${titles[viewId] || viewId}`;
@@ -1474,6 +1572,337 @@ function closeModal() {
   const overlay = document.getElementById('demo-modal-overlay');
   if (overlay) overlay.style.display = 'none';
   editingDemo = null;
+}
+
+// ===== AGENT SUITE =====
+const AGENT_TEMPLATES = [
+  {
+    key: 'speed2lead',
+    icon: '⚡',
+    name: 'Speed 2 Lead',
+    desc: 'Instantly qualifies and responds to leads 24/7',
+    tags: ['Lead Capture', 'Qualification', 'Auto-Reply'],
+    agent_type: 'chat',
+    prompt:
+`You are the Speed 2 Lead agent for {BUSINESS_NAME}.
+Your #1 goal is to respond INSTANTLY to every new lead and convert them into a booked appointment.
+
+Behavior rules:
+- Reply within seconds. Never leave a lead waiting. Keep replies short, warm and energetic.
+- Ask 2-3 quick qualifying questions (what they need, when, urgency).
+- Address every answer and gently steer toward booking.
+- Push every qualified lead to book at the booking link: {BOOKING_URL}
+- If they hesitate, offer 2 time slots and ask which works.
+- Capture their phone number so the team can follow up: team line {PHONE}.
+- Never invent prices or guarantees. Hand off complex questions to a human.
+- Always end with a clear next step (book, call, or leave a number).`
+  },
+  {
+    key: 'review-responder',
+    icon: '⭐',
+    name: 'Review Responder',
+    desc: 'Auto-responds to Google reviews with on-brand replies',
+    tags: ['Google Reviews', 'Reputation', 'Sentiment'],
+    agent_type: 'chat',
+    prompt:
+`You are the Review Responder agent for {BUSINESS_NAME}.
+You craft professional, on-brand replies to Google reviews.
+
+Behavior rules:
+- Positive reviews: thank them warmly, reference something specific they mentioned, invite them back or to refer a friend.
+- Mixed reviews: reinforce the positive, calmly address the concern, and offer to make it right.
+- Negative reviews: never argue. Acknowledge their experience, apologise sincerely, and invite them to continue privately at {PHONE} or {BOOKING_URL}.
+- Keep replies concise (2-4 sentences), genuine, and consistent with a friendly, trustworthy tone.
+- Never make promises about refunds, guarantees or free work — escalate those to the team.
+- Always sign off as {BUSINESS_NAME}.`
+  },
+  {
+    key: 'followup-engine',
+    icon: '🔄',
+    name: 'Follow-Up Engine',
+    desc: '48-hour automated nurture sequence for cold leads',
+    tags: ['Nurture', 'SMS', 'Email', 'Sequences'],
+    agent_type: 'chat',
+    prompt:
+`You are the Follow-Up Engine agent for {BUSINESS_NAME}.
+You run a gentle 48-hour nurture sequence that re-warms cold leads.
+
+Behavior rules:
+- Send short, value-add messages — no hard selling on contact 1.
+- Each message gives ONE useful tip, offer, or reason to reply.
+- Build gentle urgency over the sequence ("we only have a few slots left this week").
+- Make it effortless to book: always include {BOOKING_URL}.
+- Adapt to replies: if they reply, switch to conversation and push to book within 2 messages.
+- If they ask to be left alone, opt them out immediately and politely.
+- Never spam. Maximum one message per touchpoint. Reference the team line {PHONE} for human help.
+- Keep messages under 160 characters where possible (SMS-friendly).`
+  },
+  {
+    key: 'live-chat-widget',
+    icon: '💬',
+    name: 'Live Chat Widget',
+    desc: 'AI chat agent for your website that books appointments',
+    tags: ['Website', 'Chat', 'Booking'],
+    agent_type: 'chat',
+    prompt:
+`You are the Live Chat Widget agent for {BUSINESS_NAME}, embedded on their website.
+You help visitors in real time and turn conversations into bookings.
+
+Behavior rules:
+- Greet visitors warmly and offer to help immediately.
+- Answer questions about services, hours and location using the business knowledge.
+- Keep responses SHORT (1-3 sentences). No walls of text.
+- Every productive reply should steer toward booking at {BOOKING_URL}.
+- Offer to transfer to the team or callback at {PHONE} for anything you can't resolve.
+- Capture name and contact before booking so the team can follow up.
+- Never invent prices or guarantees — say "let me get the team to confirm".`
+  },
+  {
+    key: 'booking-assistant',
+    icon: '📅',
+    name: 'Booking Assistant',
+    desc: 'Conversational booking agent for phone and chat',
+    tags: ['Phone', 'Booking', 'Calendar'],
+    agent_type: 'voice',
+    prompt:
+`You are the Booking Assistant for {BUSINESS_NAME}, handling bookings over phone and chat.
+
+Behavior rules:
+- Your sole focus is scheduling: find a time that works and confirm the appointment.
+- Offer 2-3 concrete time options rather than open questions ("We have Tuesday 2pm or Wednesday 10am — which suits?").
+- Always send the booking link to lock it in: {BOOKING_URL}.
+- Confirm the appointment back to the caller: date, time, what to expect, and the address/directions if relevant.
+- Capture their name and phone number for a confirmation reminder.
+- If nothing suits, offer a callback at {PHONE} or add them to a waitlist.
+- Reschedule and cancel politely with zero friction.
+- Never give medical, legal or pricing advice — route those to the team.`
+  },
+  {
+    key: 'support-agent',
+    icon: '🎧',
+    name: 'Support Agent',
+    desc: 'Handles FAQs and support tickets automatically',
+    tags: ['Support', 'FAQ', 'Ticketing'],
+    agent_type: 'chat',
+    prompt:
+`You are the Support Agent for {BUSINESS_NAME}.
+You resolve common questions and support tickets automatically.
+
+Behavior rules:
+- Start by understanding the issue in one sentence, then guide step-by-step.
+- Answer FAQs (hours, location, how-to, policies) clearly from the business knowledge.
+- Provide simple troubleshooting steps, one at a time, and check it worked before moving on.
+- Log the issue as a ticket and keep the customer updated.
+- Escalate to a human for anything billing-related, unsafe, or unresolved after 2 steps: hand off via {PHONE} or {BOOKING_URL}.
+- Stay calm, patient and empathetic at all times.
+- Confirm resolution and offer to help with anything else before closing.`
+  }
+];
+
+// In-memory + localStorage deployment tracker
+let agentDeployments = {};
+try { agentDeployments = JSON.parse(localStorage.getItem('cloudhak_agent_deployments') || '{}'); } catch (e) { agentDeployments = {}; }
+
+function agentDeployKey(clientId, agentKey) {
+  return (clientId || '__global__') + '|' + agentKey;
+}
+function saveAgentDeployments() {
+  try {
+    const persisted = {};
+    Object.keys(agentDeployments).forEach(k => { if (!k.startsWith('__deploying__')) persisted[k] = agentDeployments[k]; });
+    localStorage.setItem('cloudhak_agent_deployments', JSON.stringify(persisted));
+  } catch (e) {}
+}
+
+function renderAgentSuite() {
+  const view = document.getElementById('view-agent-suite');
+  const hasClient = !!selectedClient;
+
+  const banner = hasClient
+    ? `<div class="agent-suite-banner">
+         <div class="banner-icon">🎯</div>
+         <div class="banner-text">Deploying agents for <b>${selectedClient.name}</b>. Customise the details and deploy to Dograh in one click.</div>
+       </div>`
+    : `<div class="agent-suite-banner">
+         <div class="banner-icon">👀</div>
+         <div class="banner-text"><b>Browse mode.</b> Select a client from the sidebar to deploy agents. You can preview every template below.</div>
+       </div>`;
+
+  const cards = AGENT_TEMPLATES.map(agentAgentCardHtml).join('');
+
+  view.innerHTML = `
+    <div class="agent-suite-header">
+      <h2>🤖 Agent Suite</h2>
+      <p>Deploy AI agents in one click</p>
+    </div>
+    ${banner}
+    <div class="agent-grid" id="agent-grid">${cards}</div>
+  `;
+}
+
+function agentAgentCardHtml(t) {
+  const hasClient = !!selectedClient;
+  const dep = hasClient ? agentDeployments[agentDeployKey(selectedClient.locId, t.key)] : null;
+  const deploying = hasClient && agentDeployments['__deploying__|' + selectedClient.locId + '|' + t.key];
+
+  let foot;
+  if (dep) {
+    foot = `<span class="agent-status-badge deployed">● Active</span>
+            <a class="agent-active-link" href="${dep.demo_url}" target="_blank">Open agent →</a>`;
+  } else if (deploying) {
+    foot = `<span class="agent-status-badge deploying">Deploying…</span>
+            <button class="agent-deploy-btn" disabled>Working…</button>`;
+  } else {
+    foot = `<span class="agent-status-badge idle">Not Deployed</span>
+            <button class="agent-deploy-btn" onclick="openAgentDeployModal('${t.key}')">⚡ Deploy</button>`;
+  }
+
+  const tags = t.tags.map(tag => `<span class="agent-tag">${tag}</span>`).join('');
+
+  return `
+    <div class="agent-card" id="agent-card-${t.key}">
+      <div class="agent-card-top">
+        <div class="agent-card-icon">${t.icon}</div>
+      </div>
+      <div class="agent-card-name">${t.name}</div>
+      <div class="agent-card-desc">${t.desc}</div>
+      <div class="agent-tags">${tags}</div>
+      <div class="agent-card-foot">${foot}</div>
+    </div>`;
+}
+
+function openAgentDeployModal(agentKey) {
+  const t = AGENT_TEMPLATES.find(a => a.key === agentKey);
+  if (!t) return;
+
+  if (!selectedClient) {
+    showToast('Select a client first to deploy agents', 'info');
+    return;
+  }
+
+  const c = selectedClient;
+  const html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <div style="font-size:30px">${t.icon}</div>
+        <h3 style="margin:8px 0 2px">Deploy ${t.name}</h3>
+        <div style="font-size:13px;color:var(--gray)">${t.desc}</div>
+      </div>
+      <button onclick="closeModal()" style="background:var(--light-gray);color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer">✕</button>
+    </div>
+
+    <div class="agent-deploy-field">
+      <label>Business Name</label>
+      <input id="agent-deploy-business" value="${(c.name || '').replace(/"/g, '&quot;')}" placeholder="Business name">
+    </div>
+    <div class="agent-deploy-field">
+      <label>Booking URL</label>
+      <input id="agent-deploy-booking" placeholder="https://book.cloud-hak.com/...">
+    </div>
+    <div class="agent-deploy-field">
+      <label>Phone Number</label>
+      <input id="agent-deploy-phone" placeholder="e.g. 020 1234 5678">
+    </div>
+
+    <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px">
+      <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Prompt preview</div>
+      <div style="font-size:12px;color:var(--gray);line-height:1.5;white-space:pre-wrap;font-family:monospace;max-height:160px;overflow-y:auto">${t.prompt.replace(/</g, '&lt;')}</div>
+    </div>
+
+    <button onclick="confirmAgentDeploy('${t.key}')" id="agent-deploy-confirm-btn" style="background:var(--teal);color:#001818;border:none;padding:13px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;width:100%">
+      🚀 Deploy to Dograh
+    </button>
+    <div id="agent-deploy-status" style="margin-top:12px;font-size:13px;text-align:center"></div>
+  `;
+
+  showModal(html);
+}
+
+async function confirmAgentDeploy(agentKey) {
+  const t = AGENT_TEMPLATES.find(a => a.key === agentKey);
+  if (!t || !selectedClient) return;
+
+  const business = (document.getElementById('agent-deploy-business').value || selectedClient.name).trim();
+  const booking = (document.getElementById('agent-deploy-booking').value || '').trim();
+  const phone = (document.getElementById('agent-deploy-phone').value || '').trim();
+  const statusEl = document.getElementById('agent-deploy-status');
+  const btn = document.getElementById('agent-deploy-confirm-btn');
+
+  const prompt = t.prompt
+    .replace(/\{BUSINESS_NAME\}/g, business)
+    .replace(/\{BOOKING_URL\}/g, booking || 'your booking link')
+    .replace(/\{PHONE\}/g, phone || 'the team line');
+
+  // Mark deploying
+  agentDeployments['__deploying__|' + selectedClient.locId + '|' + t.key] = true;
+  saveAgentDeployments();
+  refreshAgentCard(agentKey);
+
+  btn.disabled = true;
+  btn.textContent = 'Deploying…';
+  statusEl.innerHTML = '<span style="color:var(--gold)">⏳ Creating agent on Dograh and publishing…</span>';
+
+  try {
+    const resp = await fetch('/api/demos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        website_url: booking || selectedClient.sub || business,
+        business_name: business + ' · ' + t.name,
+        agent_type: t.agent_type,
+        prompt_template: prompt
+      }),
+    });
+    const result = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(result.error || 'Deploy failed');
+    }
+
+    const demoUrl = result.demo_url || ('https://app.cloud-hak.com/demo.html?agent=' + result.agentId);
+    const depKey = agentDeployKey(selectedClient.locId, agentKey);
+    delete agentDeployments['__deploying__|' + selectedClient.locId + '|' + agentKey];
+    agentDeployments[depKey] = {
+      agentId: result.agentId,
+      demo_url: demoUrl,
+      business: business,
+      deployedAt: Date.now()
+    };
+    saveAgentDeployments();
+
+    // Update badge
+    const badge = document.getElementById('badge-agent-suite');
+    if (badge) badge.textContent = AGENT_TEMPLATES.filter(a => agentDeployments[agentDeployKey(selectedClient.locId, a.key)]).length + ' active';
+
+    // Success view inside modal
+    statusEl.innerHTML = '';
+    btn.style.display = 'none';
+    document.querySelector('#demo-modal-content').innerHTML = `
+      <div class="agent-success-box">
+        <div class="ok">✅</div>
+        <h3 style="margin:8px 0 4px">${t.name} is live!</h3>
+        <div style="color:var(--gray);font-size:13px">Deployed for ${business}</div>
+        <a class="link" href="${demoUrl}" target="_blank">Open ${t.name} →</a>
+        <div style="margin-top:14px"><button onclick="closeModal()" style="background:var(--light-gray);color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">Close</button></div>
+      </div>`;
+    refreshAgentCard(agentKey);
+    showToast(t.name + ' deployed successfully', 'success');
+  } catch (e) {
+    delete agentDeployments['__deploying__|' + selectedClient.locId + '|' + agentKey];
+    saveAgentDeployments();
+    refreshAgentCard(agentKey);
+    statusEl.innerHTML = '<span style="color:#f04747">❌ ' + e.message + '</span>';
+    btn.disabled = false;
+    btn.textContent = '🚀 Deploy to Dograh';
+    showToast('Deploy failed: ' + e.message, 'error');
+  }
+}
+
+function refreshAgentCard(agentKey) {
+  const card = document.getElementById('agent-card-' + agentKey);
+  if (!card) return;
+  const t = AGENT_TEMPLATES.find(a => a.key === agentKey);
+  if (t) card.outerHTML = agentAgentCardHtml(t);
 }
 
 // ===== RENDER SERVICE PAGE =====
