@@ -144,29 +144,48 @@ Generate a JSON object with these exact keys:
   "scraped_details": "A clean summary of ALL key facts extracted: services, pricing, hours, location, team, booking info, phone, email. Formatted as readable text for later editing."
 }`;
 
-  const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
-    body: JSON.stringify({
-      model: 'glm-4.7',
-      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
-      temperature: 0.4,
-      max_tokens: 3000,
-    }),
-  });
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '');
-    console.error('Z.AI error:', resp.status, errBody.substring(0, 500));
-    throw new Error(`Z.AI failed: ${resp.status} ${errBody.substring(0, 200)}`);
+  // Retry up to 2 times with 30s timeout each
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
+        body: JSON.stringify({
+          model: 'glm-4.7',
+          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+          temperature: 0.4,
+          max_tokens: 3000,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!resp.ok) {
+        const errBody = await resp.text().catch(() => '');
+        console.error(`Z.AI error (attempt ${attempt + 1}):`, resp.status, errBody.substring(0, 500));
+        lastError = new Error(`Z.AI failed: ${resp.status} ${errBody.substring(0, 200)}`);
+        continue;
+      }
+      const data = await resp.json();
+      let text = (data.choices?.[0]?.message?.content || '').trim();
+      if (!text) {
+        lastError = new Error('Z.AI returned empty response');
+        continue;
+      }
+      // Strip markdown code fences if present
+      text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+      // Try to extract JSON object from response if there's extra text
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) text = jsonMatch[0];
+      const parsed = JSON.parse(text);
+      // Attach raw scraped content for reference
+      parsed.raw_scrape = scrapedContent.substring(0, 5000);
+      return parsed;
+    } catch (e) {
+      console.error(`Persona generation attempt ${attempt + 1} failed:`, e.message);
+      lastError = e;
+    }
   }
-  const data = await resp.json();
-  let text = data.choices[0].message.content.trim();
-  // Strip markdown code fences if present
-  text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-  const parsed = JSON.parse(text);
-  // Attach raw scraped content for reference
-  parsed.raw_scrape = scrapedContent.substring(0, 5000);
-  return parsed;
+  throw lastError || new Error('Persona generation failed after retries');
 }
 
 // ===== Website scraping =====

@@ -4,6 +4,9 @@
   "rewrites": [
     { "source": "/dashboard", "destination": "/index.html" }
   ],
+  "functions": {
+    "api/demos.js": { "maxDuration": 60 }
+  },
   "headers": [
     {
       "source": "/api/(.*)",
