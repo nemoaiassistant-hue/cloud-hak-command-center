@@ -239,7 +239,7 @@ async function executeFunction(name, args, ghToken, config) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${zaiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'glm-4.7',
+          model: 'glm-4.6',
           messages: [{
             role: 'system',
             content: `You are an expert at creating AI agent prompts for ${isVoice ? 'voice' : 'chat'} assistants. Given website content, generate a complete agent persona. Respond ONLY with valid JSON, no markdown fences.`
@@ -256,8 +256,8 @@ Generate a JSON object with these exact keys:
 {
   "business_name": "the actual business name from the website",
   "greeting": "A natural greeting the agent says when someone starts a conversation. Mention the business name. ${isVoice ? 'Keep it short for voice (10-15 words).' : 'Keep it friendly and brief.'}",
-  "global_prompt": "A detailed system prompt for the agent. Include: who the agent is, its role, ${isVoice ? 'keep responses 2-3 sentences max for voice, use simple spoken language, avoid special characters.' : 'CRITICAL RULE: respond in 1-3 sentences MAX per message. NEVER use bullet points, numbered lists, or markdown. Keep every reply short and conversational like texting a friend. Share one piece of info, then ask a question. Never dump everything at once.'} Include services, pricing, FAQs, booking info, business hours, and contact details. Tell the agent to be helpful, warm, and professional. If specific details aren't on the website, acknowledge and offer to connect them with the team.",
-  "main_prompt": "The main conversation prompt. Include knowledge about services, treatments, pricing, FAQs, and common questions. ${isVoice ? 'Keep responses brief for voice.' : 'CRITICAL: Every response must be 1-3 sentences max. No lists. No bullet points. Always end with a question to keep the conversation flowing. Break information across multiple exchanges — never dump everything in one message.'} Include a wrap-up offering to book appointments or connect with the team.",
+  "global_prompt": "IMPORTANT: This is the primary knowledge base for the agent. Put ALL company information here including: company name, full address, phone number, email, services with descriptions, pricing if available, business hours, booking process, and key FAQs. Start with 'You are a helpful agent representing [business name].' Then list all company details. End with rules: 'Keep responses to 1-3 sentences. No bullet points. Always end with a question. NEVER make up information — only use what is provided above. If asked something not covered, offer to connect them with the team.' ${isVoice ? 'Use simple spoken language for voice.' : ''}",
+  "main_prompt": "Conversation flow guidance: guide the visitor through understanding their needs and offering relevant services. ${isVoice ? 'Keep responses brief for voice.' : 'CRITICAL: Every response must be 1-3 sentences max. No lists. Always end with a question.'} Always offer to book an appointment or connect with the team.",
   "summary": "One sentence summary of what this agent does"
 }`
           }],
