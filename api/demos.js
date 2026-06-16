@@ -148,11 +148,11 @@ Generate a JSON object with these exact keys:
   let lastError;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ZAI_KEY}` },
         body: JSON.stringify({
-          model: 'glm-4-flash',
+          model: 'glm-4.6',
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
           temperature: 0.4,
           max_tokens: 2000,
