@@ -157,7 +157,7 @@ Generate a JSON object with these exact keys:
           temperature: 0.4,
           max_tokens: 2000,
         }),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(40000),
       });
       if (!resp.ok) {
         const errBody = await resp.text().catch(() => '');
