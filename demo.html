@@ -283,55 +283,122 @@ if (window.visualViewport) {
   vw.addEventListener('scroll', onResize);
 }
 
-// ===== Voice =====
+// ===== Voice (Browser Speech API — no WebRTC/WebSocket needed) =====
 let voiceActive = false;
+let recognition = null;
+let speechSynth = window.speechSynthesis || window.webkitSpeechSynthesis;
+
+function initSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = 'en-US';
+  let finalText = '';
+  let silenceTimer = null;
+
+  rec.onresult = (event) => {
+    let interim = '';
+    finalText = '';
+    for (let i = 0; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalText += event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    // Show interim text in input
+    if (interim) input.value = (finalText + interim).trim();
+    // Auto-send after 1.5s of silence following final result
+    if (finalText) {
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        if (finalText.trim() && voiceActive) {
+          input.value = finalText.trim();
+          sendMessage();
+          finalText = '';
+        }
+      }, 1500);
+    }
+  };
+
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      addMsg('system', '⚠️ Microphone access denied. Please allow it in browser settings.');
+      toggleVoice(); // turn off
+    } else if (e.error === 'no-speech') {
+      // ignore — recognition continues
+    } else {
+      console.warn('Speech error:', e.error);
+    }
+  };
+
+  rec.onend = () => {
+    // Auto-restart if still in voice mode
+    if (voiceActive) {
+      try { rec.start(); } catch(e) {}
+    }
+  };
+
+  return rec;
+}
 
 async function toggleVoice() {
+  const inlineBtn = document.getElementById('wh-voice-inline');
+  
   if (voiceActive) {
-    addMsg('system', 'Voice call ended.');
-    if (window.DograhWidget && window.DograhWidget.endCall) window.DograhWidget.endCall();
+    // End voice mode
     voiceActive = false;
+    if (recognition) { try { recognition.stop(); } catch(e) {} }
+    if (speechSynth) speechSynth.cancel();
     voiceBtn.classList.remove('active');
     voiceBtn.textContent = '📞';
+    if (inlineBtn) { inlineBtn.classList.remove('active'); inlineBtn.textContent = '📞'; }
+    addMsg('system', 'Voice mode off.');
     return;
   }
+
+  // Check support
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    addMsg('system', '⚠️ Voice not supported on this browser. Try Chrome or Safari.');
+    return;
+  }
+
+  // Start voice mode
   voiceBtn.classList.add('loading');
+  if (inlineBtn) inlineBtn.classList.add('loading');
+  
+  // Request mic permission early
   try {
-    const resp = await fetch('/api/embed?workflow_id=' + WF_ID);
-    if (!resp.ok) throw new Error('Voice not available');
-    const data = await resp.json();
-    if (!data.token) throw new Error('No embed token');
-    addMsg('system', '🎙️ Starting voice call... Allow microphone access when prompted.');
-    const existing = document.getElementById('dograh-widget');
-    if (existing) existing.remove();
-    const script = document.createElement('script');
-    script.id = 'dograh-widget';
-    script.src = data.widgetUrl;
-    script.async = true;
-    script.onload = () => {
-      voiceActive = true;
-      voiceBtn.classList.remove('loading');
-      voiceBtn.classList.add('active');
-      voiceBtn.textContent = '🔇';
-      addMsg('system', '📞 Voice call active — speak naturally!');
-    };
-    script.onerror = () => {
-      voiceBtn.classList.remove('loading');
-      addMsg('system', '⚠️ Voice server unavailable.');
-    };
-    document.body.appendChild(script);
-    setTimeout(() => {
-      if (voiceBtn.classList.contains('loading')) {
-        voiceBtn.classList.remove('loading');
-        voiceActive = true;
-        voiceBtn.classList.add('active');
-        voiceBtn.textContent = '🔇';
-      }
-    }, 5000);
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop()); // release — recognition will re-request
   } catch (e) {
     voiceBtn.classList.remove('loading');
-    addMsg('system', '⚠️ Voice unavailable: ' + e.message);
+    if (inlineBtn) inlineBtn.classList.remove('loading');
+    addMsg('system', '⚠️ Microphone access denied. Please allow it and try again.');
+    return;
   }
+
+  recognition = initSpeechRecognition();
+  if (!recognition) {
+    voiceBtn.classList.remove('loading');
+    addMsg('system', '⚠️ Voice not supported on this browser.');
+    return;
+  }
+
+  try {
+    recognition.start();
+  } catch(e) { /* already started */ }
+
+  voiceActive = true;
+  voiceBtn.classList.remove('loading');
+  voiceBtn.classList.add('active');
+  voiceBtn.textContent = '🔇';
+  if (inlineBtn) { inlineBtn.classList.remove('loading'); inlineBtn.classList.add('active'); inlineBtn.textContent = '🔇'; }
+  addMsg('system', '🎤 Voice mode on — speak naturally, I\'ll reply out loud.');
+  input.placeholder = 'Listening... or type here';
 }
 
 // Auto-resize textarea
@@ -369,8 +436,20 @@ function hideTyping() {
 
 function renderMessages(messages) {
   chat.innerHTML = '';
+  let lastBotMsg = '';
   for (const m of messages) {
-    if (m.content && m.content.trim()) addMsg(m.role === 'user' ? 'user' : 'bot', m.content);
+    if (m.content && m.content.trim()) {
+      addMsg(m.role === 'user' ? 'user' : 'bot', m.content);
+      if (m.role !== 'user') lastBotMsg = m.content;
+    }
+  }
+  // Speak last bot reply if voice mode is on
+  if (voiceActive && lastBotMsg && speechSynth) {
+    speechSynth.cancel();
+    const utter = new SpeechSynthesisUtterance(lastBotMsg);
+    utter.rate = 1.0;
+    utter.pitch = 1.05;
+    speechSynth.speak(utter);
   }
 }
 
@@ -416,6 +495,11 @@ async function startSession() {
       renderMessages(session.messages);
     } else if (info.greeting) {
       addMsg('bot', info.greeting);
+      if (voiceActive && speechSynth) {
+        const utter = new SpeechSynthesisUtterance(info.greeting);
+        utter.rate = 1.0; utter.pitch = 1.05;
+        speechSynth.speak(utter);
+      }
     }
   } catch (e) {
     hideTyping();
