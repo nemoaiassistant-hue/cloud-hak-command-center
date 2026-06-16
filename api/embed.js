@@ -36,7 +36,9 @@ export default async function handler(req, res) {
     });
     if (getResp.ok) {
       const data = await getResp.json();
-      embedToken = data.token;
+      if (data && typeof data === 'object' && data.token) {
+        embedToken = data.token;
+      }
     }
 
     // Create if doesn't exist
