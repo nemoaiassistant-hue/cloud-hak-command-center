@@ -144,9 +144,9 @@ Generate a JSON object with these exact keys:
   "scraped_details": "A clean summary of ALL key facts extracted: services, pricing, hours, location, team, booking info, phone, email. Formatted as readable text for later editing."
 }`;
 
-  // Retry up to 2 times with 12s timeout each
+  // Single attempt with 25s timeout
   let lastError;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 1; attempt++) {
     try {
       const resp = await fetch('https://open.bigmodel.cn/api/coding/paas/v4/chat/completions', {
         method: 'POST',
@@ -157,7 +157,7 @@ Generate a JSON object with these exact keys:
           temperature: 0.4,
           max_tokens: 2000,
         }),
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(25000),
       });
       if (!resp.ok) {
         const errBody = await resp.text().catch(() => '');
@@ -395,9 +395,9 @@ export default async function handler(req, res) {
       if (!scrapedContent || scrapedContent.length < 50) {
         return res.status(400).json({ error: 'Website returned no usable content' });
       }
-      // Trim scrape to 5K chars to keep Z.AI fast
-      if (scrapedContent.length > 5000) {
-        scrapedContent = scrapedContent.substring(0, 5000);
+      // Trim scrape to 3K chars to keep Z.AI fast
+      if (scrapedContent.length > 3000) {
+        scrapedContent = scrapedContent.substring(0, 3000);
       }
 
       // 2. Generate persona via Z.AI
