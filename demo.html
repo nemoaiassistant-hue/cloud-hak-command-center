@@ -7,51 +7,40 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
-/* ===== MOCK WEBSITE BACKGROUND ===== */
-.web-bg {
+/* ===== INFO BACKGROUND ===== */
+.info-bg {
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   min-height:100vh; height:100dvh; overflow-y:auto;
-  background:#f8f9fa; color:#1a1a2e; position:relative;
+  background:linear-gradient(160deg,#0f1120,#1a1d2e);
+  display:flex; align-items:center; justify-content:center;
+  padding:60px 24px 120px;
 }
-
-/* Fake navbar */
-.web-nav {
-  display:flex; align-items:center; gap:16px;
-  padding:16px 24px; background:#fff; border-bottom:1px solid #e5e7eb;
-  position:sticky; top:0; z-index:1;
+.info-card {
+  max-width:560px; text-align:center; color:#d4d4d8;
 }
-.web-logo { font-weight:800; font-size:20px; }
-.web-nav-links { display:flex; gap:20px; margin-left:auto; }
-.web-nav-links a { color:#6b7280; text-decoration:none; font-size:14px; }
-.web-nav-links span { color:#6b7280; font-size:14px; }
-
-/* Hero */
-.web-hero {
-  padding:48px 24px 40px; text-align:center; max-width:800px; margin:0 auto;
+.info-card .info-icon { font-size:48px; margin-bottom:16px; }
+.info-card h1 { font-size:26px; font-weight:700; color:#fff; margin-bottom:8px; }
+.info-card .info-sub { font-size:15px; color:#a1a1aa; margin-bottom:28px; }
+.info-steps {
+  display:flex; flex-direction:column; gap:14px; text-align:left;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
+  border-radius:16px; padding:24px;
 }
-.web-hero h1 { font-size:28px; margin-bottom:10px; line-height:1.3; }
-.web-hero p { font-size:16px; color:#6b7280; margin-bottom:20px; line-height:1.6; }
-.web-cta {
-  display:inline-block; padding:12px 28px; border-radius:8px;
-  font-size:15px; font-weight:600; color:#fff; text-decoration:none;
+.info-step { display:flex; gap:12px; align-items:flex-start; }
+.info-step .step-num {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700;
 }
-
-/* Services grid */
-.web-services {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
-  max-width:800px; margin:0 auto; padding:0 24px 40px;
+.info-step .step-text { font-size:14px; line-height:1.5; padding-top:3px; }
+.info-step .step-text b { color:#fff; }
+.info-hint {
+  margin-top:20px; font-size:13px; color:#71717a;
+  display:flex; align-items:center; justify-content:center; gap:6px;
 }
-.web-card {
-  background:#fff; border-radius:12px; padding:20px; border:1px solid #e5e7eb;
-}
-.web-card .ico { font-size:28px; margin-bottom:8px; }
-.web-card h3 { font-size:15px; margin-bottom:4px; }
-.web-card p { font-size:13px; color:#9ca3af; line-height:1.5; }
-
-/* Fake footer */
-.web-footer {
-  text-align:center; padding:20px; font-size:12px; color:#9ca3af;
-  border-top:1px solid #e5e7eb;
+.info-hint .pulse-dot {
+  width:10px; height:10px; border-radius:50%; background:#6366f1;
+  animation:notifPulse 2s infinite;
 }
 
 /* ===== CHAT WIDGET BUBBLE ===== */
@@ -178,25 +167,35 @@
 <!-- Demo banner -->
 <div class="demo-banner">🎯 Live AI Demo — this is how the chat widget looks on your client's website</div>
 
-<!-- ===== MOCK WEBSITE ===== -->
-<div class="web-bg" id="web-bg">
-  <div class="web-nav">
-    <div class="web-logo" id="web-logo">Business</div>
-    <div class="web-nav-links">
-      <span>About</span><span>Services</span><span>Contact</span>
+<!-- ===== INFO BACKGROUND ===== -->
+<div class="info-bg" id="info-bg">
+  <div class="info-card">
+    <div class="info-icon">🤖</div>
+    <h1 id="info-title">AI Assistant Demo</h1>
+    <p class="info-sub" id="info-sub">This is a live, interactive demo of the AI chat agent we've built for this business.</p>
+    <div class="info-steps">
+      <div class="info-step">
+        <div class="step-num" style="background:rgba(99,102,241,0.2);color:#818cf8">1</div>
+        <div class="step-text"><b>Click the chat bubble</b> (bottom right) to open the conversation.</div>
+      </div>
+      <div class="info-step">
+        <div class="step-num" style="background:rgba(34,197,94,0.2);color:#4ade80">2</div>
+        <div class="step-text"><b>Ask anything</b> — about services, pricing, booking, hours, or location.</div>
+      </div>
+      <div class="info-step">
+        <div class="step-num" style="background:rgba(245,158,11,0.2);color:#fbbf24">3</div>
+        <div class="step-text"><b>Try voice mode</b> 📞 — click the phone icon to talk out loud.</div>
+      </div>
+      <div class="info-step">
+        <div class="step-num" style="background:rgba(168,85,247,0.2);color:#c084fc">4</div>
+        <div class="step-text"><b>This runs 24/7</b> — the agent never sleeps, never misses a lead.</div>
+      </div>
+    </div>
+    <div class="info-hint">
+      <span class="pulse-dot"></span>
+      <span>Agent is online — try it now!</span>
     </div>
   </div>
-  <div class="web-hero">
-    <h1 id="web-hero-title">Welcome to our practice</h1>
-    <p id="web-hero-sub">Your trusted local provider. Book your appointment today.</p>
-    <a href="#" class="web-cta" id="web-cta" style="background:#3bb6b3">Book Now</a>
-  </div>
-  <div class="web-services" id="web-services">
-    <div class="web-card"><div class="ico">🩺</div><h3>Consultation</h3><p>Expert consultation with our experienced team.</p></div>
-    <div class="web-card"><div class="ico">📅</div><h3>Easy Booking</h3><p>Schedule online or call us during business hours.</p></div>
-    <div class="web-card"><div class="ico">⭐</div><h3>Trusted Service</h3><p>Committed to providing the best care for every client.</p></div>
-  </div>
-  <div class="web-footer">© 2026 — This is a simulated website preview for demo purposes</div>
 </div>
 
 <!-- ===== CHAT BUBBLE ===== -->
@@ -252,10 +251,6 @@ function applyTheme() {
   bubble.style.background = themeColor;
   document.getElementById('wh-avatar').style.background = themeColor;
   sendBtn.style.background = themeColor;
-  document.getElementById('web-cta').style.background = themeColor;
-
-  // Derive a gradient for user messages
-  document.documentElement.style.setProperty('--user-color', themeColor);
 }
 
 function toggleWidget() {
@@ -386,10 +381,8 @@ async function startSession() {
     document.getElementById('wh-desc').textContent = info.description || 'Ask me anything!';
     document.title = agentName + ' — Live Demo';
 
-    // Update mock website with agent's business name
-    const bizName = agentName.replace(/\s+(AI|Assistant|Agent|Bot).*$/i, '').trim() || agentName;
-    document.getElementById('web-logo').textContent = bizName;
-    document.getElementById('web-hero-title').textContent = 'Welcome to ' + bizName;
+    // Update info card title with business name
+    document.getElementById('info-title').textContent = agentName;
 
     // Start session
     showTyping();
