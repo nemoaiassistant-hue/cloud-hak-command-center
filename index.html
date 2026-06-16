@@ -1289,6 +1289,25 @@ async function createDemo() {
       return;
     }
 
+    if (result.status === 'processing') {
+      statusEl.innerHTML = '<span style="color:#f0a830">⏳ Demo agent is being created... This takes ~60 seconds. The demo will appear below when ready.</span>';
+      hideDemoForm();
+      // Poll for the new demo every 10 seconds
+      const pollInterval = setInterval(async () => {
+        await loadDemos();
+        // Check if we have a new demo
+        const container = document.getElementById('demo-list');
+        const demos = container.querySelectorAll('.demo-card');
+        if (demos.length > 1 || (demos.length === 1 && demos[0].dataset.status !== 'processing')) {
+          clearInterval(pollInterval);
+          statusEl.innerHTML = '<span style="color:var(--green)">✅ Demo agent created! Check below.</span>';
+        }
+      }, 10000);
+      // Stop polling after 3 minutes
+      setTimeout(() => clearInterval(pollInterval), 180000);
+      return;
+    }
+
     statusEl.innerHTML = `<span style="color:var(--green)">✅ Agent created! Demo link ready.</span>`;
     hideDemoForm();
     await loadDemos();
